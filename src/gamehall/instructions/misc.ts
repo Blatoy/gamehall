@@ -6,7 +6,7 @@ export default [
         name: 'NOP',
         comment: 'Wastes a clock cycle.',
         code: 0x00,
-        execute: () => ({ clockCycles: 1})
+        execute: () => ({ clockCycles: 1 })
     },
     {
         name: 'STOP',
@@ -14,8 +14,8 @@ export default [
         execute: (cpu: CPU) => { throw new NotImplementedError(); }
     },
     {
-        name: 'HALT',
         code: 0x76,
+        name: 'HALT',
         execute: (cpu: CPU) => { throw new NotImplementedError(); }
     },
     {
@@ -47,7 +47,7 @@ export default [
     },
     {
         name: 'CPL',
-        comment: 'Flips all bits of register A',
+        comment: 'Flips all bits of register a',
         code: 0x2F,
         execute: (cpu: CPU) => {
             // TODO: Does setUint8(negative number) do it goodly?

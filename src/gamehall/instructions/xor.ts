@@ -2,7 +2,7 @@ import { CPU } from "../cpu.js";
 import { Pointer8 } from "../pointer.js";
 import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 
-// Execute XOR between A and r
+/** Execute XOR between A and r */
 function xor(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
     const a = cpu.registers.a;
     a.setUint(a.getUint() ^ value.getUint());
@@ -51,7 +51,7 @@ const xorCodes: Instruction[] = [
     {
         code: 0xAE,
         name: 'XOR a,(hl)',
-        execute: (cpu: CPU) => xor(cpu, cpu.pointerHL8())
+        execute: (cpu: CPU) => xor(cpu, cpu.pointerHL8(), 2)
     },
     {
         code: 0xEE,
