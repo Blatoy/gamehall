@@ -32,6 +32,22 @@ export class ZeroFlag extends Flag {
     }
 }
 
+export class NegativeFlag extends Flag {
+    compute(value: number | Pointer8 | Pointer16): boolean {
+        if (value instanceof Pointer) {
+            value = value.getInt();
+        }
+
+        if (value < 0) {
+            this.set();
+            return true;
+        } else {
+            this.clear();
+            return false;
+        }
+    }
+}
+
 export class CarryFlag extends Flag {
     /*compute8Add(value1: number | Pointer8, value2: number | Pointer8) {
         if (value1 instanceof Pointer) {

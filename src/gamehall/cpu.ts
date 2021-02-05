@@ -2,8 +2,9 @@ import { Instruction, InstructionDefinition, InstructionExecuteOutput, NotImplem
 import InstructionList from './instructions/index.js';
 import { Binch } from "../binch/binch.js";
 import { Memory } from "./memory.js";
-import { CarryFlag, HalfCarryFlag, Flag, ZeroFlag } from "./cpu.flag.js";
+import { CarryFlag, HalfCarryFlag, Flag, NegativeFlag, ZeroFlag } from "./cpu.flag.js";
 import { Pointer16, Pointer8 } from "./pointer.js";
+import { toHex } from "./utils.js";
 
 /**
  * Duration of one clock cycle (in ms).
@@ -61,7 +62,7 @@ export class CPU {
         /** Carry on 4th bit occurred. */
         h: new HalfCarryFlag(this.registers.f, 5),
         /** Last operation was negative. */
-        n: new Flag(this.registers.f, 6),
+        n: new NegativeFlag(this.registers.f, 6),
         /** Last operation resulted in zero. */
         z: new ZeroFlag(this.registers.f, 7),
         /** Reset all flags to 0. */
@@ -71,6 +72,7 @@ export class CPU {
     };
 
     constructor(private memory: Memory) {
+        // TODO: Fix declaration definition so it does not show a "fake" error here
         this.instructions = this.buildInstructionList(InstructionList);
     }
 
@@ -92,13 +94,13 @@ export class CPU {
      * Gets the instruction at the given byte offset, without changing the CPU's state.
      */
     getInstruction(byteOffset: number): InstructionInformation {
-        const result: InstructionInformation = { opCode: [], instruction: undefined };
+        const result: InstructionInformation = { opCodes: [], instruction: undefined };
 
         // Start at "root level" instructions
         let parentInstructions = this.instructions;
         while (true) {
             const opCode = this.memory.data.getUint8(byteOffset++);
-            result.opCode.push(opCode);
+            result.opCodes.push(opCode);
 
             const instructionOrList = parentInstructions[opCode];
             if (instructionOrList === null) {
@@ -135,13 +137,14 @@ export class CPU {
 
     private executeInstruction(): { instruction: Instruction, result: InstructionExecuteOutput} {
         const pcValue = this.registers.pc.getUint();
-        const { opCode, instruction } = this.getInstruction(pcValue);
-        this.registers.pc.setUint(pcValue + opCode.length);
+        const { opCodes, instruction } = this.getInstruction(pcValue);
+        this.registers.pc.setUint(pcValue + opCodes.length);
 
         if (instruction === undefined) {
-            throw new NotImplementedError('Unknown instruction opcode ' + opCode);
+            throw new NotImplementedError('Unknown instruction opcode ' + opCodes.map(c => toHex(c)));
         }
 
+        console.debug('Executing', instruction.name, toHex(instruction.code));
         return { instruction, result: instruction.execute(this) };
     }
 
@@ -226,6 +229,6 @@ type WritableSortedInstructions = Array<Instruction | WritableSortedInstructions
 type SortedInstructions = ReadonlyArray<Instruction | WritableSortedInstructions | null>;
 
 export interface InstructionInformation {
-    opCode: number[];
+    opCodes: number[];
     instruction: Instruction | undefined;
 }
