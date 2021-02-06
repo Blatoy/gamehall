@@ -16,7 +16,7 @@ const CPU_CYCLE_SPEED = 1000 / 4_190_000;
 
 export class CPU {
 
-    private readonly instructions: SortedInstructions;
+    protected readonly instructions: SortedInstructions;
 
     readonly registerBuffer = new ArrayBuffer(12);
     readonly registerData = new Binch(this.registerBuffer);
@@ -52,7 +52,11 @@ export class CPU {
         e: new Pointer8(this.registerData, 8),
         d: new Pointer8(this.registerData, 9),
         c: new Pointer8(this.registerData, 10),
-        b: new Pointer8(this.registerData, 11)
+        b: new Pointer8(this.registerData, 11),
+        /** Reset all registers to 0. */
+        reset: () => {
+            new Uint8Array(this.registerBuffer).fill(0);
+        }
     };
 
     /** z n h c */
@@ -71,7 +75,7 @@ export class CPU {
         }
     };
 
-    constructor(private memory: Memory) {
+    constructor(protected memory: Memory) {
         // TODO: Fix declaration definition so it does not show a "fake" error here
         this.instructions = this.buildInstructionList(InstructionList as InstructionDefinition[]);
     }
@@ -88,6 +92,14 @@ export class CPU {
         }
 
         return sortedInstructions;
+    }
+
+    getRegisterNames(): RegisterName[] {
+        return Object.keys(this.registers).filter(r => r !== 'reset') as RegisterName[];
+    }
+
+    getFlagNames(): FlagName[] {
+        return Object.keys(this.flags).filter(r => r !== 'reset') as FlagName[];
     }
 
     /**
@@ -135,7 +147,7 @@ export class CPU {
         }
     }
 
-    private executeInstruction(): { instruction: Instruction, result: InstructionExecuteOutput} {
+    protected executeInstruction(): { instruction: Instruction, result: InstructionExecuteOutput} {
         const pcValue = this.registers.pc.getUint();
         const { opCodes, instruction } = this.getInstruction(pcValue);
         this.registers.pc.setUint(pcValue + opCodes.length);
@@ -223,10 +235,11 @@ export class CPU {
     }
 }
 
-export type RegisterName = keyof CPU['registers'];
+export type RegisterName = Exclude<keyof CPU['registers'], 'reset'>;
+export type FlagName = Exclude<keyof CPU['flags'], 'reset'>;
 
 type WritableSortedInstructions = Array<Instruction | WritableSortedInstructions | null>;
-type SortedInstructions = ReadonlyArray<Instruction | WritableSortedInstructions | null>;
+export type SortedInstructions = ReadonlyArray<Instruction | WritableSortedInstructions | null>;
 
 export interface InstructionInformation {
     opCodes: number[];

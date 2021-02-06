@@ -5,6 +5,7 @@ module.exports = function (config) {
         browsers: ['Chrome'],
         files: [
             { pattern: './test/**/*.spec.ts', type: 'module' },
+            { pattern: './test/**/*.ts', type: 'module', included: false },
             { pattern: './src/**/*.ts', type: 'module', included: false },
         ],
         preprocessors: {
