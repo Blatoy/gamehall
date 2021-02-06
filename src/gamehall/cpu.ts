@@ -73,7 +73,7 @@ export class CPU {
 
     constructor(private memory: Memory) {
         // TODO: Fix declaration definition so it does not show a "fake" error here
-        this.instructions = this.buildInstructionList(InstructionList);
+        this.instructions = this.buildInstructionList(InstructionList as InstructionDefinition[]);
     }
 
     private buildInstructionList(instructionDefinitions: ReadonlyArray<InstructionDefinition>): WritableSortedInstructions {
