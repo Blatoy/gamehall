@@ -1,5 +1,5 @@
 import { CPU } from "../../cpu.js";
-import { NotImplementedError } from "../../instruction.js";
+import { InstructionDefinition, NotImplementedError } from "../../instruction.js";
 
 export default [
     {
@@ -83,4 +83,4 @@ export default [
         name: 'RR a',
         execute: (cpu: CPU) => { throw new NotImplementedError(); }
     }
-];
+] as InstructionDefinition[];
