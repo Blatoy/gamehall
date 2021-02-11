@@ -4,7 +4,7 @@
   "description": "Gameboy emulator written in TypeScript",
   "scripts": {
     "build": "tsc",
-    "build:dev": "tsc --watch",
+    "build:dev": "concurrently --kill-others \"tsc --watch\" \"sass --watch ./dist/style:./dist/generated/style\"",
     "start": "http-server ./dist",
     "test": "karma start ./karma.conf.js"
   },
@@ -12,12 +12,14 @@
   "license": "ISC",
   "devDependencies": {
     "@types/mocha": "^8.2.0",
+    "concurrently": "^5.3.0",
     "http-server": "^0.12.3",
     "karma": "5.0",
     "karma-chrome-launcher": "^3.1.0",
     "karma-mocha": "^2.0.1",
     "karma-typescript": "^5.2.0",
     "mocha": "^8.2.1",
+    "sass": "^1.32.7",
     "typescript": "^4.1.3"
   }
 }
