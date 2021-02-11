@@ -1,0 +1,15 @@
+header {
+    & > div {
+        display: flex;
+        align-items: center;
+    }
+    & > .left {
+        margin-right: 10px;
+    }
+    & > .center {
+        margin-right: 10px;
+    }
+    & > .right {
+        margin-left: 10px;
+    }
+}

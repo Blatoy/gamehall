@@ -1,0 +1,14 @@
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1px;
+    background-color: #080808;
+    padding: 8px;
+
+    &.top {
+        flex: 1;
+    }
+    &.bottom {
+        flex: 0.75;
+    }
+}

@@ -1,11 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Gamehall</title>
-    </head>
-    <body>
-        <script type="module" src="./scripts/gamehall/index.js"></script>
-    </body>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamehall</title>
+    <link href="./generated/style/main.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Header bar -->
+    <header class="row">
+        <div class="left">
+            <button>
+                <img class="icon" src="./icons/folder-open.svg">
+            </button>
+            <span>tetris.gb</span>
+        </div>
+
+        <div class="center">
+            <button title="Pause/Continue">
+                <img class="icon" src="./icons/pause.svg">
+            </button>
+            <button title="Step">
+                <img class="icon" src="./icons/forward.svg">
+            </button>
+            <input type="range" style="width: 100px; margin-left: 10px;">
+            <input type="number" style="width: 60px" placeholder="speed">
+            <button id="registers-hex" style="width: auto;">
+                Hex. <img class="icon" src="./icons/code.svg">
+            </button>
+        </div>
+
+        <div class="right">
+            <button title="Reset ROM">
+                <img class="icon" src="./icons/stop.svg">
+            </button>
+        </div>
+    </header>
+
+    <!-- Top row -->
+    <div class="row top">
+        <!-- Memory view -->
+        <canvas id="memory-view" width="256" height="256"></canvas>
+
+        <!-- Screen -->
+        <canvas id="screen" width="160" height="144"></canvas>
+
+        <div class="titled-container">
+            <span class="title">Flags / Registers</span>
+            <table>
+                <tr><th>Zero</th><th>Carry</th><th>Half</th><th>Negative</th></tr>
+                <tr><td class="flag-disabled">0</td><td class="flag-disabled">0</td><td>1</td><td class="flag-disabled">0</td></tr>
+            </table>
+            <table>
+                <tr><th>PC</th><td>0000 0000</td><td>0000 0000</td></tr>
+                <tr><th>SP</th><td>0000 0000</td><td>0000 0000</td></tr>
+                <tr><th>H</th><td>0000 0000</td></tr>
+                <tr><th>L</th><td>0000 0000</td></tr>
+                <tr><th>A</th><td>0000 0000</td></tr>
+                <tr><th>F</th><td>0000 0000</td></tr>
+                <tr><th>D</th><td>0000 0000</td></tr>
+                <tr><th>E</th><td>0000 0000</td></tr>
+                <tr><th>B</th><td>0000 0000</td></tr>
+                <tr><th>C</th><td>0000 0000</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bottom row -->
+    <div class="row bottom">
+        <div class="titled-container flex-40">
+            <span class="title">Memory editor</span>
+            <div class="monospace">
+                <table class="tight">
+                    <tr>
+                        <th class="memory-address">$ADDR</th>
+                        <th>01</th>
+                        <th>02</th>
+                        <th>03</th>
+                        <th>04</th>
+                        <th>05</th>
+                        <th>06</th>
+                        <th>07</th>
+                        <th>08</th>
+                        <th>09</th>
+                        <th>0A</th>
+                        <th>0B</th>
+                        <th>0C</th>
+                        <th>0D</th>
+                        <th>0E</th>
+                        <th>0F</th>
+                    </tr>
+                        <tr><td class="memory-address">$0000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0010</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0020</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0030</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0040</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0050</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0060</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0070</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0080</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0090</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$00A0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$00B0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$00C0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$00E0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$00F0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                </table>
+                <div>
+                    <input type="text">
+                    <input type="text">
+                    <input type="text">
+                </div>
+            </div>
+        </div>
+        <div class="titled-container flex-20">
+            <span class="title">Last instructions</span>
+            <div class="monospace">
+                <table>
+                    <tr>
+                        <th>Instruction</th>
+                        <th>Param 1</th>
+                        <th>Param 2</th>
+                    </tr>
+                    <tr><td>LDD a,f</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>XOR a,l</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>AND a,b</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>LD a,e</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>LD a,h</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>LDD a,f</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>XOR a,l</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>AND a,b</td><td>0000 0000</td><td>0000 0000</td></tr>
+                    <tr><td>LD a,e</td><td>0000 0000</td><td>0000 0000</td></tr>
+                </table>
+            </div>
+        </div>
+        <div class="titled-container flex-20">
+            <span class="title">Stack</span>
+        </div>
+        <div class="titled-container flex-20">
+            <span class="title">Call/Jump history</span>
+        </div>
+    </div>
+
+    <!--
+            <script type="module" src="./generated/scripts/gamehall/index.js"></script>
+        -->
+</body>
+
 </html>

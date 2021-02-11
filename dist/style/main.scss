@@ -1,0 +1,179 @@
+@import './_flex.scss';
+@import './_header.scss';
+@import './_row.scss';
+
+@mixin scrollbar {
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #eee;
+        border-radius: 0;
+    }
+    scrollbar-width: thin;
+    scrollbar-color: #eee transparent;
+}
+
+@mixin monospace {
+    font-family: Consolas, 'Courier New', Courier, monospace;
+}
+
+* {
+    color: #eee;
+}
+
+html, body {
+    background-color: #222222;
+    box-sizing: border-box;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.titled-container {
+    // border: 1px solid red;
+    padding-left: 1em;
+    padding-right: 1em;
+
+    & > .title {
+        display: block;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    & > * {
+        margin-bottom: 10px;
+    }
+
+    & table {
+        width: 100%;
+    }
+}
+
+table.tight {
+    border: 1px solid #444444;
+    margin-right: auto;
+    margin-left: auto;
+    width: 100%;
+
+    & td, & th {
+        border: none;
+        padding: 0px;
+        padding-left: 3px;
+        padding-right: 3px;
+    }
+
+    & th {
+        padding-bottom: 5px;
+    }
+
+    & .memory-address {
+        padding-right: 10px;
+    }
+
+}
+
+#screen {
+    background-color: #aaeebb;
+}
+
+#memory-view {
+    background-color: gray;
+}
+
+
+/*
+.titled-container > .title {
+    font-weight: bold;
+}
+
+.column > * {
+    margin-bottom: 10px;
+}
+
+
+.debug-table-container {
+    flex: 0.3;
+}
+
+.table-container {
+    max-height: 300px;
+    overflow: auto;
+    @include scrollbar;
+}
+
+.table-container > table {
+    width: 100%;
+}
+*/
+/*
+.stack {
+    flex: 0.3;
+    width: 100%;
+    height: 100%;
+    background-color: teal;
+}
+*/
+
+input, button {
+    background-color: transparent;
+    border: none;
+}
+
+button {
+    cursor: pointer;
+    width: 2em;
+    height: 2em;
+    text-align: center;
+}
+
+button:hover {
+    background-color: #111111;
+}
+
+button:active {
+    background-color: #fff;
+}
+
+button:active img.icon {
+    filter: none;
+}
+
+img.icon {
+    width: 1em;
+    vertical-align: middle;
+    filter: #{ "invert()" };
+}
+
+table {
+    @include monospace;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+th {
+    width: 1px;
+}
+th, td {
+    border: 1px solid #444444;
+    padding: 0.3em;
+    white-space: nowrap;
+}
+td {
+    letter-spacing: 0.05em;
+}
+
+
+.flag-disabled {
+    color: #333;
+}
+
+.box-header {
+    text-align: center;
+}
