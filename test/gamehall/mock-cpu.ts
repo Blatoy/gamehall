@@ -88,7 +88,7 @@ export class MockCPU extends CPU {
                 continue;
             } else if (typeof expectedValue === 'object') {
                 // Expect flag bits
-                for (const flagName of Object.keys(expectedValue) as FlagName[]) {
+                for (const flagName of this.getFlagNames() as FlagName[]) {
                     let expectedFlagValue = expectedValue[flagName];
                     if (expectedFlagValue === undefined) {
                         // Expect unchanged, or 0 if never set

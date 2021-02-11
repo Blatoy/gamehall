@@ -1,50 +1,63 @@
 import { CPU } from "../cpu.js";
-import { InstructionDefinition, NotImplementedError } from "../instruction.js";
+import { Instruction, InstructionExecuteOutput } from "../instruction.js";
+import { Pointer8 } from "../pointer.js";
 
-export default [
+/** Execute OR between A and r */
+function or(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
+    const a = cpu.registers.a;
+    a.setUint(a.getUint() | value.getUint());
+    cpu.flags.reset();
+    cpu.flags.z.compute(a);
+
+    return { clockCycles };
+}
+
+const orCodes: Instruction[] = [
+    {
+        code: 0xB7,
+        name: 'OR a,a',
+        execute: (cpu: CPU) => or(cpu, cpu.registers.a)
+    },
     {
         code: 0xB0,
-        name: 'OR b',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,b',
+        execute: (cpu: CPU) => or(cpu, cpu.registers.b)
     },
     {
         code: 0xB1,
-        name: 'OR c',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,c',
+        execute: (cpu: CPU) => or(cpu, cpu.registers.c)
     },
     {
         code: 0xB2,
-        name: 'OR d',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,d',
+        execute: (cpu: CPU) => or(cpu, cpu.registers.d)
     },
     {
         code: 0xB3,
-        name: 'OR e',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,e',
+        execute: (cpu: CPU) => or(cpu, cpu.registers.e)
     },
     {
         code: 0xB4,
-        name: 'OR h',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,h',
+        execute: (cpu: CPU) => or(cpu, cpu.registers.h)
     },
     {
         code: 0xB5,
-        name: 'OR l',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,l',
+        execute: (cpu: CPU) => or(cpu, cpu.registers.l)
     },
     {
         code: 0xB6,
-        name: 'OR (hl)',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
-    },
-    {
-        code: 0xB7,
-        name: 'OR a',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,(hl)',
+        execute: (cpu: CPU) => or(cpu, cpu.pointerHL8(), 2)
     },
     {
         code: 0xF6,
-        name: 'OR d8',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'OR a,d8',
+        execute: (cpu: CPU) => or(cpu, cpu.next8(), 2)
     }
-] as InstructionDefinition[];
+];
+
+export default orCodes;

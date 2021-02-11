@@ -11,9 +11,9 @@ describe('XOR', () => {
     });
     
     it('Simple', () => {
-        cpu.resetRegisters({ a: 0b1010_1010, b: 0b0101_0101 });
+        cpu.resetRegisters({ a: 0b0011_1100, b: 0b1111_0000 });
         cpu.testInstruction('XOR a,b');
-        cpu.expect8BitRegisters({ a: 0b1111_1111 });
+        cpu.expect8BitRegisters({ a: 0b1100_1100 });
     });
     it('Zero Flag', () => {
         cpu.resetRegisters({ a: 0b0011_1100, b: 0b0011_1100 });
