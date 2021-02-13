@@ -1,6 +1,6 @@
-// Generate classes .flex-10 to .flex-100
-@for $i from 1 through 10 {
-    .flex-#{$i * 10} {
-        flex: $i / 10;
+// Generate classes .flex-10 to .flex-100 in steps of 5
+@for $i from 1 through 20 {
+    .flex-#{$i * 5} {
+        flex: $i / 5;
     }
 }

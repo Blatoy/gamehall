@@ -4,7 +4,7 @@ import { Binch } from "../binch/binch.js";
 import { Memory } from "./memory.js";
 import { CarryFlag, HalfCarryFlag, Flag, NegativeFlag, ZeroFlag } from "./cpu.flag.js";
 import { Pointer16, Pointer8 } from "./pointer.js";
-import { toHex } from "./utils.js";
+import { executeHooks, toHex } from "./utils.js";
 
 /**
  * Duration of one clock cycle (in ms).
@@ -75,6 +75,12 @@ export class CPU {
         }
     };
 
+    /** IME flag. */
+    interruptMasterEnableFlag = false;
+
+    preExecuteHooks: InstructionExecuteHook[] = [];
+    postExecuteHooks: InstructionExecuteHook[] = [];
+
     constructor(protected memory: Memory) {
         this.instructions = this.buildInstructionList(InstructionList);
     }
@@ -129,11 +135,11 @@ export class CPU {
     /** Executes the next number of milliseconds of clock cycles. */
     tickCPU(duration: number) {
         if (duration > this.maxExecutionTime) {
-            console.log(`Cannot keep up! Did the system time change or is the server overloaded? Running ${duration - this.maxExecutionTime}ms behind`);
+            console.warn(`Cannot keep up! Did the system time change or is the server overloaded? Running ${duration - this.maxExecutionTime}ms behind`);
             duration = this.maxExecutionTime;
         }
         
-        const clockCycleDuration = CPU_CYCLE_SPEED * this.speedFactor;
+        const clockCycleDuration = CPU_CYCLE_SPEED / this.speedFactor;
         while (duration > 0) {
             // TODO: Check interrupt
 
@@ -147,6 +153,8 @@ export class CPU {
     }
 
     protected executeInstruction(): { instruction: Instruction, result: InstructionExecuteOutput} {
+        // TODO: Check interrupt
+        
         const pcValue = this.registers.pc.getUint();
         const { opCodes, instruction } = this.getInstruction(pcValue);
         this.registers.pc.setUint(pcValue + opCodes.length);
@@ -155,8 +163,18 @@ export class CPU {
             throw new NotImplementedError('Unknown instruction opcode ' + opCodes.map(c => toHex(c)));
         }
 
-        console.debug('Executing', instruction.name, toHex(instruction.code));
-        return { instruction, result: instruction.execute(this) };
+        try {
+            executeHooks(this.preExecuteHooks, { instruction, offset: pcValue });
+            const result = { instruction, result: instruction.execute(this) };
+            executeHooks(this.postExecuteHooks, { instruction, offset: pcValue });
+            return result;
+        } catch (err) {
+            if (err instanceof NotImplementedError) {
+                throw new NotImplementedError('Not implemented instruction ' + instruction.name + ' opcode ' + opCodes.map(c => toHex(c)));
+            } else {
+                throw err;
+            }
+        }
     }
 
     /**
@@ -243,4 +261,10 @@ export type SortedInstructions = ReadonlyArray<Instruction | WritableSortedInstr
 export interface InstructionInformation {
     opCodes: number[];
     instruction: Instruction | undefined;
+}
+
+export type InstructionExecuteHook = (data: InstructionExecuteHookData) => void;
+export interface InstructionExecuteHookData {
+    instruction: Instruction;
+    offset: number;
 }

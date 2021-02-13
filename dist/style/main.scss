@@ -53,6 +53,7 @@ body {
 
     & table {
         width: 100%;
+        text-align: left;
     }
 }
 
@@ -126,6 +127,12 @@ input, button {
     border: none;
 }
 
+input {
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    padding: 0.25em;
+}
+
 button {
     cursor: pointer;
     width: 2em;
@@ -176,4 +183,41 @@ td {
 
 .box-header {
     text-align: center;
+}
+
+.scrollable-table {
+    max-height: 390px;
+    overflow: auto;
+    @include scrollbar;
+}
+
+.memory-editor-options {
+    margin-top: 1em;
+    display: flex; 
+    align-items: center;
+
+    & table {  
+        width: auto;
+        margin-right: 1em;
+    }
+    
+    & input {
+        width: 3.5em;
+        margin-left: 0.8em;
+        margin-right: 0.8em;
+    }
+}
+
+.pc-address {
+    color: #FE0102;
+}
+
+.memory-table {
+    & td {
+        cursor: pointer;
+    }
+
+    & td:hover {
+        text-decoration: underline;
+    }
 }

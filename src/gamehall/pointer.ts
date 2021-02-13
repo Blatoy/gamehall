@@ -1,10 +1,16 @@
 import { Binch } from "../binch/binch.js";
 
-export class Pointer {
+export abstract class Pointer {
     constructor(protected readonly binch: Binch, protected byteOffset: number) { }
+
+    abstract get byteSize(): number;
 }
 
 export class Pointer8 extends Pointer {
+    get byteSize(): number {
+        return 1;
+    }
+
     getInt(): number {
         return this.binch.getInt8(this.byteOffset);
     }
@@ -35,6 +41,10 @@ export class Pointer8 extends Pointer {
 }
 
 export class Pointer16 extends Pointer {
+    get byteSize(): number {
+        return 2;
+    }
+    
     getInt(littleEndian = true): number {
         return this.binch.getInt16(this.byteOffset, littleEndian);
     }

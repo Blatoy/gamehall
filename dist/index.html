@@ -50,30 +50,30 @@
         <div class="titled-container">
             <span class="title">Flags / Registers</span>
             <table>
-                <tr><th>Zero</th><th>Carry</th><th>Half</th><th>Negative</th></tr>
-                <tr><td class="flag-disabled">0</td><td class="flag-disabled">0</td><td>1</td><td class="flag-disabled">0</td></tr>
+                <tr><th>Zero</th><th>Negative</th><th>Half</th><th>Carry</th></tr>
+                <tr><td id="flag-z" class="flag-disabled">0</td><td id="flag-n" class="flag-disabled">0</td><td id="flag-h" class="flag-disabled">0</td><td id="flag-c" class="flag-disabled">0</td></tr>
             </table>
             <table>
-                <tr><th>PC</th><td>0000 0000</td><td>0000 0000</td></tr>
-                <tr><th>SP</th><td>0000 0000</td><td>0000 0000</td></tr>
-                <tr><th>H</th><td>0000 0000</td></tr>
-                <tr><th>L</th><td>0000 0000</td></tr>
-                <tr><th>A</th><td>0000 0000</td></tr>
-                <tr><th>F</th><td>0000 0000</td></tr>
-                <tr><th>D</th><td>0000 0000</td></tr>
-                <tr><th>E</th><td>0000 0000</td></tr>
-                <tr><th>B</th><td>0000 0000</td></tr>
-                <tr><th>C</th><td>0000 0000</td></tr>
+                <tr><th>PC</th><td id="register-pc">0000 0000 0000 0000</td></tr>
+                <tr><th>SP</th><td id="register-sp">0000 0000 0000 0000</td></tr>
+                <tr><th>H</th><td id="register-h">0000 0000</td></tr>
+                <tr><th>L</th><td id="register-l">0000 0000</td></tr>
+                <tr><th>A</th><td id="register-a">0000 0000</td></tr>
+                <tr><th>F</th><td id="register-f">0000 0000</td></tr>
+                <tr><th>D</th><td id="register-d">0000 0000</td></tr>
+                <tr><th>E</th><td id="register-e">0000 0000</td></tr>
+                <tr><th>B</th><td id="register-b">0000 0000</td></tr>
+                <tr><th>C</th><td id="register-c">0000 0000</td></tr>
             </table>
         </div>
     </div>
 
     <!-- Bottom row -->
     <div class="row bottom">
-        <div class="titled-container flex-40">
+        <div class="titled-container flex-35">
             <span class="title">Memory editor</span>
-            <div class="monospace">
-                <table class="tight">
+            <div class="monospace scrollable-table">
+                <table class="tight memory-table">
                     <tr>
                         <th class="memory-address">$ADDR</th>
                         <th>01</th>
@@ -92,7 +92,7 @@
                         <th>0E</th>
                         <th>0F</th>
                     </tr>
-                        <tr><td class="memory-address">$0000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+                        <tr><td class="memory-address">$0000</td><td class="pc-address">00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
                         <tr><td class="memory-address">$0010</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
                         <tr><td class="memory-address">$0020</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
                         <tr><td class="memory-address">$0030</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
@@ -108,45 +108,81 @@
                         <tr><td class="memory-address">$00E0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
                         <tr><td class="memory-address">$00F0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
                 </table>
-                <div>
+                <div class="memory-editor-options">
+                    <table>
+                        <tr><th>Selected opcode: </th><td>LD a,b</td></tr>
+                        <tr><th>Opcode at PC: </th><td>AND b</td></tr>
+                    </table>
+                    <label>Go to: </label>
                     <input type="text">
+                    <label>Set value: </label>
                     <input type="text">
-                    <input type="text">
+                    <label>Follow PC: </label> <input type="checkbox">
                 </div>
             </div>
         </div>
         <div class="titled-container flex-20">
             <span class="title">Last instructions</span>
-            <div class="monospace">
-                <table>
-                    <tr>
-                        <th>Instruction</th>
-                        <th>Param 1</th>
-                        <th>Param 2</th>
-                    </tr>
-                    <tr><td>LDD a,f</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>XOR a,l</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>AND a,b</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>LD a,e</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>LD a,h</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>LDD a,f</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>XOR a,l</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>AND a,b</td><td>0000 0000</td><td>0000 0000</td></tr>
-                    <tr><td>LD a,e</td><td>0000 0000</td><td>0000 0000</td></tr>
-                </table>
+            <div class="monospace scrollable-table">
+                <table id="last-instructions"></table>
             </div>
         </div>
         <div class="titled-container flex-20">
             <span class="title">Stack</span>
+            <div class="monospace scrollable-table">
+                <table>
+                    <tr>
+                        <th>Address</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr><td>$0010</td><td>0000 0000</td></tr>
+                    <tr><td>$0011</td><td>0000 0000 0000 0000</td></tr>
+                    <tr><td>$0012</td><td>0000 0000 0000 0000</td></tr>
+                    <tr><td>$0013</td><td>0000 0000</td></tr>
+                    <tr><td>$0014</td><td>0000 0000</td></tr>
+                    <tr><td>$0014</td><td>0000 0000</td></tr>
+                    <tr><td>$0014</td><td>0000 0000</td></tr>
+                    <tr><td>$0014</td><td>0000 0000</td></tr>
+                    <tr><td>$0014</td><td>0000 0000</td></tr>
+                    <tr><td>$0015</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0016</td><td>0000 0000</td></tr>
+                    <tr><td>$0017</td><td>0000 0000</td></tr>
+                    <tr><td>$0018</td><td>0000 0000</td></tr>
+                </table>
+            </div>
         </div>
         <div class="titled-container flex-20">
             <span class="title">Call/Jump history</span>
+            <div class="monospace scrollable-table">
+                <table>
+                    <tr>
+                        <th>Prev. Address</th>
+                        <th>Next. Address</th>
+                    </tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                    <tr><td>$0023</td><td>$0025</td></tr>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!--
-            <script type="module" src="./generated/scripts/gamehall/index.js"></script>
-        -->
+    <script type="module" src="./generated/scripts/gamehall/index.js"></script>
 </body>
 
 </html>
