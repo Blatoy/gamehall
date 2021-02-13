@@ -22,13 +22,19 @@ export default [
         name: 'DI',
         comment: 'Reset the interrupt master enable (IME) flag and prohibit maskable interrupts',
         code: 0xF3,
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            cpu.interruptMasterEnableFlag = false;
+            return { clockCycles: 1 };
+        }
     },
     {
         name: 'EI',
         comment: 'Set the interrupt master enable (IME) flag and enable maskable interrupts. This instruction can be used in an interrupt routine to enable higher-order interrupts',
         code: 0xFB,
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            cpu.interruptMasterEnableFlag = true;
+            return { clockCycles: 1 };
+        }
     },
     {
         name: 'DAA',

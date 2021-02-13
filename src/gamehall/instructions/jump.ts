@@ -51,8 +51,9 @@ const jumpRelativeCodes: Instruction[] = [
         code: 0x20,
         name: 'JR nz,r8',
         execute: (cpu: CPU) => {
+            const next = cpu.next8();
             if (cpu.flags.z.get() === false) {
-                cpu.jump(cpu.next8().getInt(), true);
+                cpu.jump(next.getInt(), true);
                 return { clockCycles: 3 };
             }
             return { clockCycles: 2 };
@@ -62,8 +63,9 @@ const jumpRelativeCodes: Instruction[] = [
         code: 0x28,
         name: 'JR z,r8',
         execute: (cpu: CPU) => {
+            const next = cpu.next8();
             if (cpu.flags.z.get() === true) {
-                cpu.jump(cpu.next8().getInt(), true);
+                cpu.jump(next.getInt(), true);
                 return { clockCycles: 3 };
             }
             return { clockCycles: 2 };
@@ -73,8 +75,9 @@ const jumpRelativeCodes: Instruction[] = [
         code: 0x30,
         name: 'JR nc,r8',
         execute: (cpu: CPU) => {
+            const next = cpu.next8();
             if (cpu.flags.c.get() === false) {
-                cpu.jump(cpu.next8().getInt(), true);
+                cpu.jump(next.getInt(), true);
                 return { clockCycles: 3 };
             }
             return { clockCycles: 2 };
@@ -84,8 +87,9 @@ const jumpRelativeCodes: Instruction[] = [
         code: 0x38,
         name: 'JR c,r8',
         execute: (cpu: CPU) => {
+            const next = cpu.next8();
             if (cpu.flags.c.get() === true) {
-                cpu.jump(cpu.next8().getInt(), true);
+                cpu.jump(next.getInt(), true);
                 return { clockCycles: 3 };
             }
             return { clockCycles: 2 };
