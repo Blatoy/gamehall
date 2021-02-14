@@ -6,6 +6,7 @@
     "build": "tsc",
     "build:dev": "concurrently --kill-others \"tsc --watch\" \"sass --watch ./dist/style:./dist/generated/style\"",
     "start": "http-server ./dist",
+    "start:dev": "http-server .",
     "test": "karma start ./karma.conf.js"
   },
   "author": "Blatoy & RedMser",
