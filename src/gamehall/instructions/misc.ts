@@ -1,7 +1,7 @@
 import { CPU } from "../cpu.js";
-import { InstructionDefinition, NotImplementedError } from "../instruction.js";
+import { Instruction, NotImplementedError } from "../instruction.js";
 
-export default [
+const miscCodes: Instruction[] = [
     {
         name: 'NOP',
         comment: 'Wastes a clock cycle.',
@@ -49,6 +49,7 @@ export default [
         execute: (cpu: CPU) => {
             const zero = cpu.flags.z ? 1 : 0;
             cpu.registers.f.setUint(0b0001_0000 | (zero << 7));
+            return { clockCycles: 1 };
         }
     },
     {
@@ -58,6 +59,7 @@ export default [
         execute: (cpu: CPU) => {
             // TODO: Does setUint8(negative number) do it goodly?
             cpu.registers.a.setUint(~cpu.registers.a.getUint());
+            return { clockCycles: 1 };
         }
     },
     {
@@ -73,6 +75,9 @@ export default [
             } else {
                 cpu.flags.c.set();
             }
+            return { clockCycles: 1 };
         }
     }
-] as InstructionDefinition[];
+];
+
+export default miscCodes;

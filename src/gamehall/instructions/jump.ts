@@ -5,27 +5,60 @@ const jumpAbsoluteCodes: Instruction[] = [
     {
         code: 0xC2,
         name: 'JP nz,a16',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            const next = cpu.next16();
+            if (cpu.flags.z.get() === false) {
+                cpu.jump(next.getUint());
+                return { clockCycles: 4 };
+            }
+            return { clockCycles: 3 };
+        }
     },
     {
         code: 0xC3,
         name: 'JP a16',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            // TODO: Endianness for all a16 jumps - The second byte of the object code (immediately following the opcode) corresponds to the
+            // lower-order byte of a16 (bits 0-7), and the third byte of the object code corresponds to the higher-order byte (bits 8-15).
+            cpu.jump(cpu.next16().getUint());
+            return { clockCycles: 4 };
+        }
     },
     {
         code: 0xCA,
         name: 'JP z,a16',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            const next = cpu.next16();
+            if (cpu.flags.z.get() === true) {
+                cpu.jump(next.getUint());
+                return { clockCycles: 4 };
+            }
+            return { clockCycles: 3 };
+        }
     },
     {
         code: 0xD2,
         name: 'JP nc,a16',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            const next = cpu.next16();
+            if (cpu.flags.c.get() === false) {
+                cpu.jump(next.getUint());
+                return { clockCycles: 4 };
+            }
+            return { clockCycles: 3 };
+        }
     },
     {
         code: 0xDA,
         name: 'JP c,a16',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            const next = cpu.next16();
+            if (cpu.flags.c.get() === true) {
+                cpu.jump(next.getUint());
+                return { clockCycles: 4 };
+            }
+            return { clockCycles: 3 };
+        }
     },
     {
         code: 0xE9,
