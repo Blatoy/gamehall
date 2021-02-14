@@ -1,5 +1,6 @@
 import { CPU } from "../cpu.js";
-import { Instruction } from "../instruction.js";
+import { Instruction, InstructionExecuteOutput } from "../instruction.js";
+import { Pointer8 } from "../pointer.js";
 
 /** Increment r by 1. */
 function inc(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {

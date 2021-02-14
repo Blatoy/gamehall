@@ -1,5 +1,6 @@
 import { CPU } from "../cpu.js";
-import { InstructionDefinition, NotImplementedError } from "../instruction.js";
+import { InstructionDefinition, InstructionExecuteOutput } from "../instruction.js";
+import { Pointer8 } from "../pointer.js";
 
 /** Decrement r by 1. */
 function dec(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
