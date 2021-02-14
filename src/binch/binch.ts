@@ -3,15 +3,21 @@ export class Binch extends DataView {
     constructor(buffer: ArrayBufferLike, byteOffset?: number, byteLength?: number, ...hooks: BinchHook[]) {
         super(buffer, byteOffset, byteLength);
 
+        this.uint8Array = new Uint8Array(buffer, byteOffset, byteLength);
+
         this.hooks.push(...hooks);
     }
 
+    private uint8Array: Uint8Array;
     readonly hooks: BinchHook[] = [];
 
-    private applyHook(data: BinchHookData): boolean {
+    /**
+     * @param littleEndian Undefined if length <= 1.
+     */
+    private applyHook(byteOffset: number, length: number, value: number, littleEndian?: boolean): boolean {
         let passThrough = true;
         for (const hook of this.hooks) {
-            if (!hook(data)) {
+            if (!hook(byteOffset, length, value, littleEndian)) {
                 passThrough = false;
             }
         }
@@ -26,7 +32,7 @@ export class Binch extends DataView {
      * otherwise a little-endian value should be written.
      */
     setFloat32(byteOffset: number, value: number, littleEndian = true): void {
-        if (this.applyHook({ byteOffset, value, littleEndian, length: 4 })) {
+        if (this.applyHook(byteOffset, 4, value, littleEndian)) {
             super.setFloat32(byteOffset, value, littleEndian);
         }
     }
@@ -39,7 +45,7 @@ export class Binch extends DataView {
      * otherwise a little-endian value should be written.
      */
     setFloat64(byteOffset: number, value: number, littleEndian = true): void {
-        if (this.applyHook({ byteOffset, value, littleEndian, length: 8 })) {
+        if (this.applyHook(byteOffset, 8, value, littleEndian)) {
             super.setFloat64(byteOffset, value, littleEndian);
         }
     }
@@ -50,7 +56,7 @@ export class Binch extends DataView {
      * @param value The value to set.
      */
     setInt8(byteOffset: number, value: number): void {
-        if (this.applyHook({ byteOffset, value, length: 1 })) {
+        if (this.applyHook(byteOffset, 1, value)) {
             super.setInt8(byteOffset, value);
         }
     }
@@ -63,7 +69,7 @@ export class Binch extends DataView {
      * otherwise a little-endian value should be written.
      */
     setInt16(byteOffset: number, value: number, littleEndian = true): void {
-        if (this.applyHook({ byteOffset, value, littleEndian, length: 2 })) {
+        if (this.applyHook(byteOffset, 2, value, littleEndian)) {
             super.setInt16(byteOffset, value, littleEndian);
         }
     }
@@ -76,7 +82,7 @@ export class Binch extends DataView {
      * otherwise a little-endian value should be written.
      */
     setInt32(byteOffset: number, value: number, littleEndian = true): void {
-        if (this.applyHook({ byteOffset, value, littleEndian, length: 4 })) {
+        if (this.applyHook(byteOffset, 4, value, littleEndian)) {
             super.setInt32(byteOffset, value, littleEndian);
         }
     }
@@ -87,8 +93,8 @@ export class Binch extends DataView {
      * @param value The value to set.
      */
     setUint8(byteOffset: number, value: number): void {
-        if (this.applyHook({ byteOffset, value, length: 1 })) {
-            super.setUint8(byteOffset, value);
+        if (this.applyHook(byteOffset, 1, value)) {
+            this.uint8Array[byteOffset] = value;
         }
     }
 
@@ -100,8 +106,14 @@ export class Binch extends DataView {
      * otherwise a little-endian value should be written.
      */
     setUint16(byteOffset: number, value: number, littleEndian = true): void {
-        if (this.applyHook({ byteOffset, value, littleEndian, length: 2 })) {
-            super.setUint16(byteOffset, value, littleEndian);
+        if (this.applyHook(byteOffset, 2, value, littleEndian)) {
+            if (littleEndian) {
+                this.uint8Array[byteOffset] = value & 0x00FF;
+                this.uint8Array[byteOffset + 1] = (value & 0xFF00) >> 8;
+            } else {
+                this.uint8Array[byteOffset] = (value & 0xFF00) >> 8;
+                this.uint8Array[byteOffset + 1] = value & 0x00FF;
+            }
         }
     }
 
@@ -113,7 +125,7 @@ export class Binch extends DataView {
      * otherwise a little-endian value should be written.
      */
     setUint32(byteOffset: number, value: number, littleEndian = true): void {
-        if (this.applyHook({ byteOffset, value, littleEndian, length: 4 })) {
+        if (this.applyHook(byteOffset, 4, value, littleEndian )) {
             super.setUint32(byteOffset, value, littleEndian);
         }
     }
@@ -169,7 +181,7 @@ export class Binch extends DataView {
      * @param byteOffset The place in the buffer at which the value should be retrieved.
      */
     getUint8(byteOffset: number): number {
-        return super.getUint8(byteOffset);
+        return this.uint8Array[byteOffset];
     }
 
     /**
@@ -178,7 +190,11 @@ export class Binch extends DataView {
      * @param byteOffset The place in the buffer at which the value should be retrieved.
      */
     getUint16(byteOffset: number, littleEndian = true): number {
-        return super.getUint16(byteOffset, littleEndian);
+        if (littleEndian) {
+            return this.uint8Array[byteOffset] | (this.uint8Array[byteOffset + 1] << 8);
+        } else {
+            return (this.uint8Array[byteOffset] << 8) | this.uint8Array[byteOffset + 1];
+        }
     }
 
     /**
@@ -192,9 +208,10 @@ export class Binch extends DataView {
 }
 
 /**
+ * @param littleEndian Undefined if length <= 1.
  * @returns True if passthrough, false if cancels the write.
  */
-export type BinchHook = (data: BinchHookData) => boolean;
+export type BinchHook = (byteOffset: number, length: number, value: number, littleEndian?: boolean) => boolean;
 
 export interface BinchHookData {
     byteOffset: number;
