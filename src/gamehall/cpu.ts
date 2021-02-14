@@ -2,7 +2,7 @@ import { Instruction, InstructionDefinition, InstructionExecuteOutput, NotImplem
 import InstructionList from './instructions/index.js';
 import { Binch } from "../binch/binch.js";
 import { Memory } from "./memory.js";
-import { CarryFlag, HalfCarryFlag, Flag, NegativeFlag, ZeroFlag } from "./cpu.flag.js";
+import { CarryFlag, HalfCarryFlag, NegativeFlag, ZeroFlag } from "./cpu.flag.js";
 import { Pointer16, Pointer8 } from "./pointer.js";
 import { executeHooks, toHex } from "./utils.js";
 
@@ -78,10 +78,11 @@ export class CPU {
     /** IME flag. */
     interruptMasterEnableFlag = false;
 
-    preExecuteHooks: InstructionExecuteHook[] = [];
-    postExecuteHooks: InstructionExecuteHook[] = [];
+/** Returns true to break execution, false to continue as normal. */
+    preExecuteHooks: InstructionPreExecuteHook[] = [];
+    postExecuteHooks: InstructionPostExecuteHook[] = [];
 
-    constructor(protected memory: Memory) {
+    constructor(public memory: Memory) {
         this.instructions = this.buildInstructionList(InstructionList);
     }
 
@@ -138,12 +139,17 @@ export class CPU {
             console.warn(`Cannot keep up! Did the system time change or is the server overloaded? Running ${duration - this.maxExecutionTime}ms behind`);
             duration = this.maxExecutionTime;
         }
-        
+
         const clockCycleDuration = CPU_CYCLE_SPEED / this.speedFactor;
         while (duration > 0) {
             // TODO: Check interrupt
 
             const { instruction, result } = this.executeInstruction();
+            if (result === undefined) {
+                // Execution of this instruction was cancelled
+                break;
+            }
+
             if (result.clockCycles <= 0) {
                 console.error('Instruction', instruction.name, 'returned invalid clock cycles', result.clockCycles);
                 result.clockCycles = 1;
@@ -152,7 +158,7 @@ export class CPU {
         }
     }
 
-    protected executeInstruction(): { instruction: Instruction, result: InstructionExecuteOutput} {
+    executeInstruction(): { instruction: Instruction, result?: InstructionExecuteOutput} {
         // TODO: Check interrupt
         
         const pcValue = this.registers.pc.getUint();
@@ -164,9 +170,16 @@ export class CPU {
         }
 
         try {
-            executeHooks(this.preExecuteHooks, { instruction, offset: pcValue });
+            // Pre-exec hooks can cancel execution
+            for (const hook of this.preExecuteHooks) {
+                if (hook(instruction.name, pcValue)) {
+                    this.registers.pc.setUint(pcValue);
+                    return { instruction };
+                }
+            }
+
             const result = { instruction, result: instruction.execute(this) };
-            executeHooks(this.postExecuteHooks, { instruction, offset: pcValue });
+            executeHooks(this.postExecuteHooks, instruction.name, pcValue);
             return result;
         } catch (err) {
             if (err instanceof NotImplementedError) {
@@ -250,6 +263,27 @@ export class CPU {
         pc.setUint(offset);
         return offset;
     }
+
+    stackPush(value: Pointer8 | Pointer16): void {
+        if (value instanceof Pointer8) {
+            this.pointerSP8().setUint(value.getUint());
+            this.registers.sp.setUint(this.registers.sp.getUint() - 1);
+        } else {
+            this.registers.sp.setUint(this.registers.sp.getUint() - 1);
+            this.pointerSP16().setUint(value.getUint());
+            this.registers.sp.setUint(this.registers.sp.getUint() - 1);
+        }
+    }
+
+    stackPop8(): Pointer8 {
+        this.registers.sp.setUint(this.registers.sp.getUint() + 1);
+        return this.pointerSP8();
+    }
+
+    stackPop16(): Pointer16 {
+        this.registers.sp.setUint(this.registers.sp.getUint() + 2);
+        return this.pointerSP16();
+    }
 }
 
 export type RegisterName = Exclude<keyof CPU['registers'], 'reset'>;
@@ -263,8 +297,6 @@ export interface InstructionInformation {
     instruction: Instruction | undefined;
 }
 
-export type InstructionExecuteHook = (data: InstructionExecuteHookData) => void;
-export interface InstructionExecuteHookData {
-    instruction: Instruction;
-    offset: number;
-}
+/** Returns true to break execution, false to continue as normal. */
+export type InstructionPreExecuteHook = (instructionName: string, offset: number) => boolean;
+export type InstructionPostExecuteHook = (instructionName: string, offset: number) => void;

@@ -125,7 +125,7 @@ export class HalfCarryFlag extends Flag {
             value2 = value2.getUint();
         }
 
-        if((value1 & 0xF)) {
+        if ((value1 & 0xF)) {
             
         }
         // (((cpu.registers.a.asUint8 & 0xF) - (value & 0xF)) & 0x10) === 0x10

@@ -19,16 +19,16 @@
         </div>
 
         <div class="center">
-            <button title="Pause/Continue">
-                <img class="icon" src="./icons/pause.svg">
+            <button id="pause-continue" title="Pause/Continue">
+                <img id="play-pause-img" class="icon" src="./icons/play.svg">
             </button>
-            <button title="Step">
+            <button id="step" title="Step">
                 <img class="icon" src="./icons/forward.svg">
             </button>
-            <input type="range" style="width: 100px; margin-left: 10px;">
-            <input type="number" style="width: 60px" placeholder="speed">
-            <button id="registers-hex" style="width: auto;">
-                Hex. <img class="icon" src="./icons/code.svg">
+            <input type="range" id="speed-range" min="0.001" max="2" step="0.001" value="1" style="width: 100px; margin-left: 10px;">
+            <input type="number" id="speed-input" step="0.1" style="width: 60px" placeholder="Speed %" value="1">
+            <button id="cycle-binary-view" style="width: auto;">
+               <label>Binary</label> <img class="icon" src="./icons/code.svg">
             </button>
         </div>
 
@@ -73,51 +73,42 @@
         <div class="titled-container flex-35">
             <span class="title">Memory editor</span>
             <div class="monospace scrollable-table">
-                <table class="tight memory-table">
-                    <tr>
-                        <th class="memory-address">$ADDR</th>
-                        <th>01</th>
-                        <th>02</th>
-                        <th>03</th>
-                        <th>04</th>
-                        <th>05</th>
-                        <th>06</th>
-                        <th>07</th>
-                        <th>08</th>
-                        <th>09</th>
-                        <th>0A</th>
-                        <th>0B</th>
-                        <th>0C</th>
-                        <th>0D</th>
-                        <th>0E</th>
-                        <th>0F</th>
-                    </tr>
-                        <tr><td class="memory-address">$0000</td><td class="pc-address">00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0010</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0020</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0030</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0040</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0050</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0060</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0070</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0080</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$0090</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$00A0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$00B0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$00C0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$00E0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                        <tr><td class="memory-address">$00F0</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
-                </table>
                 <div class="memory-editor-options">
+                    <div>
+                        <label>Goto:</label>
+                        <input id="goto-input" type="text" placeholder="address">
+                        <label>Set value:</label>
+                        <input id="set-value-input" type="text" placeholder="value">
+                        <label>Follow PC:</label><input id="follow-pc" type="checkbox" checked>
+                    </div>
                     <table>
-                        <tr><th>Selected opcode: </th><td>LD a,b</td></tr>
-                        <tr><th>Opcode at PC: </th><td>AND b</td></tr>
+                        <tr><th>Selected:</th><td id="instruction-at-selected">--</td></tr>
+                        <tr><th>At PC:</th><td id="instruction-at-pc">--</td></tr>
                     </table>
-                    <label>Go to: </label>
-                    <input type="text">
-                    <label>Set value: </label>
-                    <input type="text">
-                    <label>Follow PC: </label> <input type="checkbox">
+                </div>
+                <div id="memory-editor">
+                    <table id="memory-table" class="tight memory-table">
+                        <tr>
+                            <th class="memory-address">$ADDR</th>
+                            <th>00</th>
+                            <th>01</th>
+                            <th>02</th>
+                            <th>03</th>
+                            <th>04</th>
+                            <th>05</th>
+                            <th>06</th>
+                            <th>07</th>
+                            <th>08</th>
+                            <th>09</th>
+                            <th>0A</th>
+                            <th>0B</th>
+                            <th>0C</th>
+                            <th>0D</th>
+                            <th>0E</th>
+                            <th>0F</th>
+                        </tr>
+                    </table>
+                    <canvas id="memory-table-scrollbar" width="8" height="256"></canvas>
                 </div>
             </div>
         </div>
@@ -130,34 +121,7 @@
         <div class="titled-container flex-20">
             <span class="title">Stack</span>
             <div class="monospace scrollable-table">
-                <table>
-                    <tr>
-                        <th>Address</th>
-                        <th>Value</th>
-                    </tr>
-                    <tr><td>$0010</td><td>0000 0000</td></tr>
-                    <tr><td>$0011</td><td>0000 0000 0000 0000</td></tr>
-                    <tr><td>$0012</td><td>0000 0000 0000 0000</td></tr>
-                    <tr><td>$0013</td><td>0000 0000</td></tr>
-                    <tr><td>$0014</td><td>0000 0000</td></tr>
-                    <tr><td>$0014</td><td>0000 0000</td></tr>
-                    <tr><td>$0014</td><td>0000 0000</td></tr>
-                    <tr><td>$0014</td><td>0000 0000</td></tr>
-                    <tr><td>$0014</td><td>0000 0000</td></tr>
-                    <tr><td>$0015</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0016</td><td>0000 0000</td></tr>
-                    <tr><td>$0017</td><td>0000 0000</td></tr>
-                    <tr><td>$0018</td><td>0000 0000</td></tr>
-                </table>
+                <table id="stack-table"></table>
             </div>
         </div>
         <div class="titled-container flex-20">
@@ -168,15 +132,6 @@
                         <th>Prev. Address</th>
                         <th>Next. Address</th>
                     </tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
-                    <tr><td>$0023</td><td>$0025</td></tr>
                 </table>
             </div>
         </div>

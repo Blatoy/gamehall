@@ -28,6 +28,12 @@ export class Memory {
     readonly uint8Array = new Uint8Array(this.arrayBuffer);
     readonly data = new Binch(this.arrayBuffer);
 
+    init(): void {
+        for (let i = 0; i < this.arrayBuffer.byteLength; i++) {
+            this.uint8Array[i] = Math.floor(Math.random() * 255);
+        }
+    }
+
     /**
      * Writes a byte array to memory without executing any hooks.
      */

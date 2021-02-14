@@ -191,7 +191,7 @@ export class MockCPU extends CPU {
     /** Put specified data at program counter (0x0000 by default), then tries to run the instruction that's there. */
     testInstructionRaw(...dataAtPC: number[]): InstructionExecuteOutput {
         this.writeDataAtPC(...dataAtPC);
-        return this.executeInstruction().result;
+        return this.executeInstruction().result!;
     }
 
     /** Directly write bytes at the program counter. */

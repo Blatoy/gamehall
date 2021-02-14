@@ -37,7 +37,6 @@ body {
 }
 
 .titled-container {
-    // border: 1px solid red;
     padding-left: 1em;
     padding-right: 1em;
 
@@ -86,54 +85,22 @@ table.tight {
 
 #memory-view {
     background-color: gray;
+    image-rendering: pixelated;
 }
 
-
-/*
-.titled-container > .title {
-    font-weight: bold;
-}
-
-.column > * {
-    margin-bottom: 10px;
-}
-
-
-.debug-table-container {
-    flex: 0.3;
-}
-
-.table-container {
-    max-height: 300px;
-    overflow: auto;
-    @include scrollbar;
-}
-
-.table-container > table {
-    width: 100%;
-}
-*/
-/*
-.stack {
-    flex: 0.3;
-    width: 100%;
-    height: 100%;
-    background-color: teal;
-}
-*/
-
-input, button {
+input, button, textarea {
     background-color: transparent;
-    border: none;
 }
 
-input {
-    border: 1px solid #aaa;
+input[type=text], input[type=password], input[type=number], textarea {
+    border: 1px solid #777;
+    background-color: black;
     border-radius: 2px;
     padding: 0.25em;
 }
 
 button {
+    border: none;
     cursor: pointer;
     width: 2em;
     height: 2em;
@@ -186,38 +153,80 @@ td {
 }
 
 .scrollable-table {
-    max-height: 390px;
+    max-height: 410px;
     overflow: auto;
     @include scrollbar;
 }
 
-.memory-editor-options {
-    margin-top: 1em;
-    display: flex; 
-    align-items: center;
-
-    & table {  
-        width: auto;
-        margin-right: 1em;
-    }
-    
-    & input {
-        width: 3.5em;
-        margin-left: 0.8em;
-        margin-right: 0.8em;
-    }
+#memory-editor {
+    display: flex;
 }
 
-.pc-address {
-    color: #FE0102;
+#memory-table-scrollbar {
+    width: 8px;
+    height: auto;
+    image-rendering: pixelated;
+    background-color: black;
+}
+
+.memory-editor-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+
+    & > table {
+        width: auto;
+    }
+    
+    & > div {
+        display: flex;
+        align-items: center;
+
+        input {
+            width: 3.5em;
+            margin-left: 0.8em;
+            margin-right: 0.8em;
+        }
+    }
 }
 
 .memory-table {
-    & td {
+    td {
         cursor: pointer;
+        user-select: none;
+
+        &.pc-address {
+            color: #FE0102;
+        }
+        
+        &.break-point {
+            background-color: #7c1b14;
+        }
+        
+        &.memory-selected {
+            outline: 1px solid #eee;
+        }
+
+        &.instruction-parameters {
+            color: #0075ff;
+        }
     }
 
-    & td:hover {
+    td, th {
+        text-align: center;
+    }
+
+    td:hover {
         text-decoration: underline;
     }
+}
+
+.clickable:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#instruction-at-pc {
+    min-width: 6.5em;
 }
