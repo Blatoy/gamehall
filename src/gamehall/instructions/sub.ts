@@ -3,12 +3,15 @@ import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 import { Pointer8 } from "../pointer.js";
 
 /** Subtract r from A. */
-function sub(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
-    const a = cpu.registers.a;
-    a.setUint(a.getUint() - value.getUint());
-    cpu.flags.z.compute(a);
+function sub(cpu: CPU, register: Pointer8, clockCycles = 1): InstructionExecuteOutput {
+    const a = cpu.registers.a.getUint();
+    const value = register.getUint();
+    const delta = a - value;
+    cpu.registers.a.setUint(delta);
+    cpu.flags.z.compute(delta);
     cpu.flags.n.set();
-    // TODO: Compute C and H flags
+    cpu.flags.h.setValue((a & 0xF) < (value & 0xF));
+    cpu.flags.c.setValue(a < value);
 
     return { clockCycles };
 }

@@ -1,5 +1,6 @@
-import { CPU } from "./cpu.js";
+import { CPU, CPU_CYCLE_SPEED } from "./cpu.js";
 import { Debug } from "./debug/debug.js";
+import { addDocumentListener } from "./hotkeys.js";
 import { Memory } from "./memory.js";
 import { ROM } from "./rom.js";
 
@@ -7,17 +8,23 @@ async function main() {
     const memory = new Memory();
     memory.init();
 
+    const gameROM = await ROM.load('tetris.gb');
+    memory.write(0, new Uint8Array(gameROM));
     const bootROM = await ROM.load('boot-rom.gb');
     memory.write(0, new Uint8Array(bootROM));
 
     const cpu = new CPU(memory);
     const debug = new Debug(cpu);
 
+    debug.addHotkeyListener();
+    addDocumentListener();
+
     let tickCount = 0;
     let lastTime: number | undefined;
     function tick(time: number) {
         tickCount++;
 
+        let duration = 0;
         if (lastTime === undefined) {
             lastTime = time;
         } else {
@@ -25,7 +32,8 @@ async function main() {
                 // TODO: DEBUG - execute only a single instruction at a time
                 // (cpu as any).executeInstruction();
                 if (!debug.CPUPaused) {
-                    cpu.tickCPU(time - lastTime);
+                    duration = time - lastTime;
+                    cpu.tickCPU(duration);
                 }
     
                 lastTime = time;
@@ -42,7 +50,12 @@ async function main() {
             debug.afterTick();
         }
 
-        window.requestAnimationFrame(time => tick(time));
+        const waitTime = duration <= 0 ? 0 : Math.max(0, CPU_CYCLE_SPEED / cpu.speedFactor - duration);
+        if (waitTime > 0) {
+            setTimeout(() => window.requestAnimationFrame(time => tick(time)), waitTime);
+        } else {
+            window.requestAnimationFrame(time => tick(time));
+        }
     }
 
     window.requestAnimationFrame(time => tick(time));

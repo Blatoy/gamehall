@@ -1,4 +1,6 @@
 import { CPU } from "../cpu.js";
+import { hotkeyListeners } from "../hotkeys.js";
+import { ROM } from "../rom.js";
 import { toBinary, toHex } from "../utils.js";
 import { LastInstructions } from "./last-instructions.js";
 import { MemoryEditor } from "./memory-editor.js";
@@ -11,13 +13,23 @@ const CYCLE_DISPLAY_BUTTON = document.getElementById("cycle-binary-view") as HTM
 const STEP_BUTTON = document.getElementById("step") as HTMLButtonElement;
 const PAUSE_CONTINUE_BUTTON = document.getElementById("pause-continue") as HTMLButtonElement;
 const PAUSE_CONTINUE_IMAGE = document.getElementById("play-pause-img") as HTMLImageElement;
+const RESET_BUTTON = document.getElementById("reset-rom") as HTMLButtonElement;
 
 export class Debug {
     memoryEditor: MemoryEditor;
     lastInstructions: LastInstructions;
     speed: Speed;
 
-    activeDisplayType = DisplayType.Binary;
+    private _activeDisplayType = DisplayType.Binary;
+    get activeDisplayType(): DisplayType {
+        return this._activeDisplayType;
+    }
+
+    set activeDisplayType(value: DisplayType) {
+        this._activeDisplayType = value;
+        CYCLE_DISPLAY_BUTTON.querySelector('label')!.innerText = DisplayType[this.activeDisplayType];
+    }
+
     CPUPaused = true;
 
     constructor(public cpu: CPU) {
@@ -27,21 +39,67 @@ export class Debug {
 
         CYCLE_DISPLAY_BUTTON.addEventListener("click", () => {
             this.cycleDisplayType();
-            CYCLE_DISPLAY_BUTTON.querySelector('label')!.innerText = DisplayType[this.activeDisplayType];
         });
 
         STEP_BUTTON.addEventListener("click", () => {
-            this.setCPUPaused(true);
-            this.cpu.executeInstruction();
+            this.step();
         });
 
         PAUSE_CONTINUE_BUTTON.addEventListener("click", () => {
-            // TODO: Toggle the icon
-            this.setCPUPaused(!this.CPUPaused);
+            this.togglePaused();
+        });
+
+        RESET_BUTTON.addEventListener("click", () => {
+            this.resetROM();
         });
     }
 
+    addHotkeyListener() {
+        hotkeyListeners.push((hotkey) => {
+            switch (hotkey) {
+                case 'step':
+                    this.step();
+                    break;
+                case 'pause':
+                    this.togglePaused();
+                    break;
+                case 'display-type-binary':
+                    this.activeDisplayType = DisplayType.Binary;
+                    break;
+                case 'display-type-hex':
+                    this.activeDisplayType = DisplayType.Hex;
+                    break;
+                case 'display-type-decimal':
+                    this.activeDisplayType = DisplayType.Decimal;
+                    break;
+                case 'reset-rom':
+                    this.resetROM();
+                    break;
+            }
+        });
+    }
+    
+    async resetROM() {
+        // TODO: Make reset more exhaustive later
+        this.cpu.reset();
+        this.cpu.memory.init();
+        this.lastInstructions.reset();
+
+        const bootROM = await ROM.load('boot-rom.gb');
+        this.cpu.memory.write(0, new Uint8Array(bootROM));
+    }
+
+    step() {
+        this.setCPUPaused(true);
+        this.cpu.executeInstruction();
+    }
+
+    togglePaused() {
+        this.setCPUPaused(!this.CPUPaused);
+    }
+
     setCPUPaused(paused: boolean) {
+        // TODO: Toggle the icon
         this.CPUPaused = paused;
         if (paused) {
             PAUSE_CONTINUE_IMAGE.src = "./icons/play.svg";

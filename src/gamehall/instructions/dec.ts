@@ -1,14 +1,17 @@
 import { CPU } from "../cpu.js";
 import { InstructionDefinition, InstructionExecuteOutput } from "../instruction.js";
-import { Pointer8 } from "../pointer.js";
+import { Pointer16, Pointer8 } from "../pointer.js";
 
 /** Decrement r by 1. */
-function dec(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
-    const newValue = value.getUint() - 1;
-    value.setUint(newValue);
-    cpu.flags.z.compute(newValue);
-    cpu.flags.n.clear();
-    // TODO: Compute C and H flags
+function dec(cpu: CPU, register: Pointer8 | Pointer16, clockCycles = 1): InstructionExecuteOutput {
+    const oldValue = register.getUint();
+    const newValue = oldValue - 1;
+    register.setUint(newValue);
+    if (register.byteSize === 1) {
+        cpu.flags.z.compute(newValue);
+        cpu.flags.n.set();
+        cpu.flags.h.setValue((oldValue & 0xF) < 1);
+    }
 
     return { clockCycles };
 }

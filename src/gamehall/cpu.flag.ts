@@ -14,6 +14,18 @@ export class Flag {
     set(): void {
         this.f.setBit(this.bitOffset);
     }
+
+    getValue(): number {
+        return this.get() ? 1 : 0;
+    }
+
+    setValue(value: number | boolean): void {
+        if (value) {
+            this.set();
+        } else {
+            this.clear();
+        }
+    }
 }
 
 export class ZeroFlag extends Flag {
@@ -149,13 +161,7 @@ export class HalfCarryFlag extends Flag {
     /* compute16(): boolean {
          // TODO
          // DAA: (registers.f & 0x20) ? true : false;
-         // INC: ((register & 0xF) + 1) & 0x10;
-         // DEC: (register & 0xF) < 1
          // LD:  (sp & 0xF) + (data & 0xF) > 0xF;
-         // ADD: (sp & 0xF) + (value & 0xF) > 0xF
-         // ADD: ((v1 & 0xFFF) + (v2 & 0xFFF)) & 0x1000
-         // SUB: (registers.a & 0xF ) < (data & 0xF)
-         // CP:  (registers.a & 0xF ) < (data & 0xF)
          // SBC: (registers.a & 0xF ) < (data & 0xF) + carry
          // DAA: (registers.f & 0x20) ? true : false
          return false;

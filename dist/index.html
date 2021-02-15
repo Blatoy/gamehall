@@ -33,7 +33,7 @@
         </div>
 
         <div class="right">
-            <button title="Reset ROM">
+            <button id="reset-rom" title="Reset ROM">
                 <img class="icon" src="./icons/stop.svg">
             </button>
         </div>
@@ -83,7 +83,7 @@
                     </div>
                     <table>
                         <tr><th>Selected:</th><td id="instruction-at-selected">--</td></tr>
-                        <tr><th>At PC:</th><td id="instruction-at-pc">--</td></tr>
+                        <tr><th>PC (<span id="pc-address">$0000</span>)</th><td id="instruction-at-pc">--</td></tr>
                     </table>
                 </div>
                 <div id="memory-editor">
@@ -115,7 +115,11 @@
         <div class="titled-container flex-20">
             <span class="title">Last instructions</span>
             <div class="monospace scrollable-table">
-                <table id="last-instructions"></table>
+                <table id="last-instructions">
+                    <tr>
+                        <th>No instructions executed</th>
+                    </tr>
+                </table>
             </div>
         </div>
         <div class="titled-container flex-20">
@@ -128,10 +132,6 @@
             <span class="title">Call/Jump history</span>
             <div class="monospace scrollable-table">
                 <table>
-                    <tr>
-                        <th>Prev. Address</th>
-                        <th>Next. Address</th>
-                    </tr>
                 </table>
             </div>
         </div>

@@ -7,15 +7,11 @@ export default [
         code: 0x17,
         name: 'RLA',
         execute: (cpu: CPU) => {
-            cpu.flags.reset();
-
+            const carry = cpu.flags.c.get();
             const value = cpu.registers.a.getUint();
-            if (getBit(value, 0)) {
-                cpu.flags.c.set();
-            } else {
-                cpu.flags.c.clear();
-            }
-            cpu.registers.a.setUint(((value & 0b1111_1110) >> 1) | (cpu.flags.c.get() ? 0b1000_0000 : 0));
+            cpu.flags.reset();
+            cpu.flags.c.setValue(getBit(value, 7));
+            cpu.registers.a.setUint(((value & 0b0111_1111) << 1) | (carry ? 0b0000_0001 : 0));
             
             return { clockCycles: 1 };
         }
@@ -29,15 +25,11 @@ export default [
         code: 0x1F,
         name: 'RRA',
         execute: (cpu: CPU) => {
-            cpu.flags.reset();
-
+            const carry = cpu.flags.c.get();
             const value = cpu.registers.a.getUint();
-            if (getBit(value, 7)) {
-                cpu.flags.c.set();
-            } else {
-                cpu.flags.c.clear();
-            }
-            cpu.registers.a.setUint(((value & 0b0111_1111) >> 1) | (cpu.flags.c.get() ? 1 : 0));
+            cpu.flags.reset();
+            cpu.flags.c.setValue(getBit(value, 0));
+            cpu.registers.a.setUint(((value & 0b1111_1110) >> 1) | (carry ? 0b1000_0000 : 0));
         
             return { clockCycles: 1 };
         }

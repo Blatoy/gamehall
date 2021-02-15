@@ -5,10 +5,13 @@ import { Pointer8 } from "../pointer.js";
 /** Add r to A. */
 function add(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
     const a = cpu.registers.a;
-    a.setUint(a.getUint() + value.getUint());
+    const v1 = a.getUint();
+    const v2 = value.getUint();
+    a.setUint(v1 + v2);
     cpu.flags.z.compute(a);
-    cpu.flags.n.clear();
-    // TODO: Compute C and H flags
+    cpu.flags.n.clear();    
+    cpu.flags.c.setValue(v1 + v2 > 255);
+    cpu.flags.h.setValue(((v1 & 0xFFF) + (v2 & 0xFFF)) & 0x1000);
 
     return { clockCycles };
 }
@@ -81,7 +84,7 @@ const addCodes: Instruction[] = [
     },
     {
         code: 0xE8,
-        name: 'ADD sp,r8',
+        name: 'ADD sp,r8', // ADD: h = (sp & 0xF) + (value & 0xF) > 0xF
         execute: (cpu: CPU) => { throw new NotImplementedError(); }
     }
 ];

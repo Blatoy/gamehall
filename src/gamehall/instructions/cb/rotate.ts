@@ -1,38 +1,28 @@
 import { getBit } from "../../../binch/utils.js";
 import { CPU } from "../../cpu.js";
-import { Instruction, InstructionExecuteOutput, NotImplementedError } from "../../instruction.js";
+import { Instruction, InstructionExecuteOutput } from "../../instruction.js";
 import { Pointer8 } from "../../pointer.js";
 
 /** Rotate left. */
 function rl(cpu: CPU, register: Pointer8, clockCycles = 2): InstructionExecuteOutput {
+    const carry = cpu.flags.c.get();
     const value = register.getUint();
-    if (getBit(value, 0)) {
-        cpu.flags.c.set();
-    } else {
-        cpu.flags.c.clear();
-    }
-    register.setUint(((value & 0b1111_1110) >> 1) | (cpu.flags.c.get() ? 0b1000_0000 : 0));
-
+    cpu.flags.reset();
     cpu.flags.z.compute(value);
-    cpu.flags.n.clear();
-    cpu.flags.h.clear();
+    cpu.flags.c.setValue(getBit(value, 7));
+    register.setUint(((value & 0b0111_1111) << 1) | (carry ? 0b0000_0001 : 0));
 
     return { clockCycles };
 }
 
 /** Rotate right. */
 function rr(cpu: CPU, register: Pointer8, clockCycles = 2): InstructionExecuteOutput {
+    const carry = cpu.flags.c.get();
     const value = register.getUint();
-    if (getBit(value, 7)) {
-        cpu.flags.c.set();
-    } else {
-        cpu.flags.c.clear();
-    }
-    register.setUint(((value & 0b0111_1111) >> 1) | (cpu.flags.c.get() ? 1 : 0));
-
+    cpu.flags.reset();
     cpu.flags.z.compute(value);
-    cpu.flags.n.clear();
-    cpu.flags.h.clear();
+    cpu.flags.c.setValue(getBit(value, 0));
+    register.setUint(((value & 0b1111_1110) >> 1) | (carry ? 0b1000_0000 : 0));
 
     return { clockCycles };
 }

@@ -12,7 +12,7 @@ import { executeHooks, toHex } from "./utils.js";
  * Machine Cycles: 1.05MHz = 1 050 000 Hz
  * Clock Cycles:   4.19MHz = 4 190 000 Hz
  */
-const CPU_CYCLE_SPEED = 1000 / 4_190_000;
+export const CPU_CYCLE_SPEED = 1000 / 4_190_000;
 
 export class CPU {
 
@@ -84,6 +84,12 @@ export class CPU {
 
     constructor(public memory: Memory) {
         this.instructions = this.buildInstructionList(InstructionList);
+    }
+
+    reset(): void {
+        this.registers.reset();
+        this.flags.reset();
+        this.interruptMasterEnableFlag = false;
     }
 
     private buildInstructionList(instructionDefinitions: ReadonlyArray<InstructionDefinition>): WritableSortedInstructions {
@@ -281,8 +287,10 @@ export class CPU {
     }
 
     stackPop16(): Pointer16 {
-        this.registers.sp.setUint(this.registers.sp.getUint() + 2);
-        return this.pointerSP16();
+        this.registers.sp.setUint(this.registers.sp.getUint() + 1);
+        const pointer = this.pointerSP16();
+        this.registers.sp.setUint(this.registers.sp.getUint() + 1);
+        return pointer;
     }
 }
 

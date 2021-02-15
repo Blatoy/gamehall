@@ -1,5 +1,4 @@
 import { CPU } from "../cpu.js";
-import { Instruction } from "../instruction.js";
 import { toHex } from "../utils.js";
 import { Debug, getValueFromString } from "./debug.js";
 
@@ -9,6 +8,7 @@ const MAX_ROW_OFFSET = 0x1000 - ROW_COUNT;
 const MEMORY_SIZE = 0xFFFF;
 
 const TABLE = document.getElementById("memory-table") as HTMLTableElement;
+const PC_ADDRESS = document.getElementById("pc-address") as HTMLSpanElement;
 const OPCODE_AT_PC = document.getElementById("instruction-at-pc") as HTMLTableDataCellElement;
 const OPCODE_AT_SELECTION = document.getElementById("instruction-at-selected") as HTMLTableDataCellElement;
 const FOLLOW_PC = document.getElementById("follow-pc") as HTMLInputElement;
@@ -243,6 +243,7 @@ export class MemoryEditor {
             }
         }
 
+        PC_ADDRESS.innerHTML = toHex(pcValue, 2, '$');
         OPCODE_AT_PC.innerHTML = instruction.instruction?.name || '???';
     }
 

@@ -345,32 +345,32 @@ const load8Codes: Instruction[] = [
     {
         code: 0x06,
         name: 'LD b,d8',
-        execute: (cpu: CPU) => load(cpu, cpu.registers.a, cpu.next8(), 2)
+        execute: (cpu: CPU) => load(cpu, cpu.registers.b, cpu.next8(), 2)
     },
     {
         code: 0x0E,
         name: 'LD c,d8',
-        execute: (cpu: CPU) => load(cpu, cpu.registers.a, cpu.next8(), 2)
+        execute: (cpu: CPU) => load(cpu, cpu.registers.c, cpu.next8(), 2)
     },
     {
         code: 0x16,
         name: 'LD d,d8',
-        execute: (cpu: CPU) => load(cpu, cpu.registers.a, cpu.next8(), 2)
+        execute: (cpu: CPU) => load(cpu, cpu.registers.d, cpu.next8(), 2)
     },
     {
         code: 0x1E,
         name: 'LD e,d8',
-        execute: (cpu: CPU) => load(cpu, cpu.registers.a, cpu.next8(), 2)
+        execute: (cpu: CPU) => load(cpu, cpu.registers.e, cpu.next8(), 2)
     },
     {
         code: 0x26,
         name: 'LD h,d8',
-        execute: (cpu: CPU) => load(cpu, cpu.registers.a, cpu.next8(), 2)
+        execute: (cpu: CPU) => load(cpu, cpu.registers.h, cpu.next8(), 2)
     },
     {
         code: 0x2E,
         name: 'LD l,d8',
-        execute: (cpu: CPU) => load(cpu, cpu.registers.a, cpu.next8(), 2)
+        execute: (cpu: CPU) => load(cpu, cpu.registers.l, cpu.next8(), 2)
     },
     {
         code: 0x36,
@@ -421,10 +421,14 @@ const load16Codes: Instruction[] = [
         comment: 'Add the 8-bit signed operand s8 (values -128 to +127) to the stack pointer sp, and store the result in register pair hl',
         execute: (cpu: CPU) => {
             // TODO: Endianness
-            const value = cpu.registers.sp.getUint() + cpu.next8().getInt();
+            const sp = cpu.registers.sp.getUint();
+            const s8 = cpu.next8().getInt();
+            const value = sp + s8;
             cpu.registers.hl.setUint(value);
             cpu.flags.reset();
-            // TODO: Set flags C and h
+            // TODO: Check if it's correct
+            cpu.flags.c.setValue(value > 0xFFFF);
+            cpu.flags.h.setValue(((sp & 0xFFFFF) + (s8 & 0xFFFFF)) & 0x100000);
 
             return { clockCycles: 3 };
         }

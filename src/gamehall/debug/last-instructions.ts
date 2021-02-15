@@ -20,6 +20,12 @@ export class LastInstructions {
         });
     }
 
+    reset() {
+        this.instructions = [];
+        this.refreshRequired = true;
+        this.updateDOMTable();
+    }
+
     addInstruction(instruction: ExecutedInstruction): void {
         if (this.instructions.length >= MAX_INSTRUCTION_COUNT) {
             this.instructions.pop();
