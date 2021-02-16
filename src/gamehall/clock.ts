@@ -29,7 +29,10 @@ export class Clock {
      * Returns the ms that elapsed as a consequence of this step, or null if the clock tick should be broken out of.
      */
     step(): number | null {
-        // TODO: Check interrupt
+        if (this.cpu.checkInterrupts()) {
+            // Interrupt!
+            // TODO: Check if this needs to consume clock cycles (because of the CALL instruction)
+        }
 
         let { instruction, elapsed } = this.cpu.executeInstruction();
         if (elapsed === null) {

@@ -32,6 +32,7 @@ const miscCodes: Instruction[] = [
         comment: 'Set the interrupt master enable (IME) flag and enable maskable interrupts. This instruction can be used in an interrupt routine to enable higher-order interrupts',
         code: 0xFB,
         execute: (cpu: CPU) => {
+            // TODO: This should be done after the next instruction, not immediately (should we have a queueInterrupt?)
             cpu.interruptMasterEnableFlag = true;
             return { clockCycles: 1 };
         }

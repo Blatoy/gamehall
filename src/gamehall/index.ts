@@ -35,7 +35,7 @@ async function main() {
             try {
                 // TODO: DEBUG - execute only a single instruction at a time
                 // (cpu as any).executeInstruction();
-                if (!debug.CPUPaused) {
+                if (!debug.clockPaused) {
                     duration = time - lastTime;
                     clock.tick(duration);
                 }
@@ -49,7 +49,7 @@ async function main() {
         }
 
         // Debug update every tick, unless the CPU is paused
-        if (!debug.CPUPaused || tickCount % 10 === 0) {
+        if (!debug.clockPaused || tickCount % 10 === 0) {
             debug.afterTick();
         }
 

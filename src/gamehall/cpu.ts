@@ -74,7 +74,7 @@ export class CPU {
     /** IME flag. */
     interruptMasterEnableFlag = false;
 
-/** Returns true to break execution, false to continue as normal. */
+    /** Returns true to break execution, false to continue as normal. */
     preExecuteHooks: InstructionPreExecuteHook[] = [];
     postExecuteHooks: InstructionPostExecuteHook[] = [];
 
@@ -111,15 +111,15 @@ export class CPU {
     }
 
     /**
-     * Gets the instruction at the given byte offset, without changing the CPU's state.
+     * Gets the instruction from opcode.
      */
-    getInstruction(byteOffset: number): InstructionInformation {
+    getInstruction(binch: Binch, byteOffset = 0): InstructionInformation {
         const result: InstructionInformation = { opCodes: [], instruction: undefined };
 
         // Start at "root level" instructions
         let parentInstructions = this.instructions;
         while (true) {
-            const opCode = this.memory.data.getUint8(byteOffset++);
+            const opCode = binch.getUint8(byteOffset++);
             result.opCodes.push(opCode);
 
             const instructionOrList = parentInstructions[opCode];
@@ -135,11 +135,18 @@ export class CPU {
         }
     }
 
+    /**
+     * Gets the instruction at the given byte offset into memory, without changing the CPU's state.
+     */
+    getInstructionFromMemory(byteOffset: number): InstructionInformation {
+        return this.getInstruction(this.memory.data, byteOffset);
+    }
+
     executeInstruction(): { instruction: Instruction, elapsed: number | null } {
         // TODO: Check interrupt
         
         const pcValue = this.registers.pc.getUint();
-        const { opCodes, instruction } = this.getInstruction(pcValue);
+        const { opCodes, instruction } = this.getInstructionFromMemory(pcValue);
         this.registers.pc.setUint(pcValue + opCodes.length);
 
         if (instruction === undefined) {
@@ -263,6 +270,70 @@ export class CPU {
         this.registers.sp.setUint(this.registers.sp.getUint() + 1);
         return pointer;
     }
+
+    setInterruptRequest(interrupt: Interrupt, request: boolean): void {
+        this.pointer8(0xFF0F).setBitValue(interrupt, request);
+    }
+
+    /** Does not check for interruptMasterEnableFlag. */
+    isInterruptEnabled(interrupt: Interrupt): boolean {
+        return this.pointer8(0xFFFF).getBit(interrupt);
+    }
+
+    isInterruptRequested(interrupt: Interrupt): boolean {
+        return this.pointer8(0xFF0F).getBit(interrupt);
+    }
+
+    /** Returns whether interrupted. */
+    checkInterrupts(): boolean {
+        // Are interrupts enabled overall?
+        if (!this.interruptMasterEnableFlag) {
+            return false;
+        }
+
+        for (let i = 0; i < Interrupt._MAX; i++) {
+            if (this.isInterruptEnabled(i) && this.isInterruptRequested(i)) {
+                this.interruptMasterEnableFlag = false;
+                this.setInterruptRequest(i, false);
+
+                // Call interrupt vector
+                let interruptVector: number;
+                switch (i) {
+                    case Interrupt.VBlank:
+                        interruptVector = 0x40;
+                        break;
+                    case Interrupt.LCDStat:
+                        interruptVector = 0x48;
+                        break;
+                    case Interrupt.Timer:
+                        interruptVector = 0x50;
+                        break;
+                    case Interrupt.Serial:
+                        interruptVector = 0x58;
+                        break;
+                    case Interrupt.Joypad:
+                        interruptVector = 0x60;
+                        break;
+                    default:
+                        throw new Error('Unknown interrupt ' + i + ' is enabled and requested.');
+                }
+
+                this.stackPush(this.registers.pc);
+                this.jump(interruptVector);
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+export enum Interrupt {
+    VBlank,
+    LCDStat,
+    Timer,
+    Serial,
+    Joypad,
+    _MAX
 }
 
 export type RegisterName = Exclude<keyof CPU['registers'], 'reset'>;

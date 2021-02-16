@@ -31,12 +31,24 @@ export class Pointer8 extends Pointer {
         return (this.getUint() & (1 << index)) !== 0;
     }
 
+    getBitValue(index: number): number {
+        return this.getBit(index) ? 1 : 0;
+    }
+
     clearBit(index: number): void {
         this.setUint(this.getUint() & ~(1 << index));
     }
 
     setBit(index: number): void {
         this.setUint(this.getUint() | (1 << index));
+    }
+
+    setBitValue(index: number, value: boolean): void {
+        if (value) {
+            this.setBit(index);
+        } else {
+            this.clearBit(index);
+        }
     }
 }
 
@@ -65,11 +77,23 @@ export class Pointer16 extends Pointer {
         return (this.getUint(littleEndian) & (1 << index)) !== 0;
     }
 
+    getBitValue(index: number): number {
+        return this.getBit(index) ? 1 : 0;
+    }
+
     clearBit(index: number, littleEndian = true): void {
         this.setUint(this.getUint(littleEndian) & ~(1 << index));
     }
 
     setBit(index: number, littleEndian = true): void {
         this.setUint(this.getUint(littleEndian) | (1 << index));
+    }
+
+    setBitValue(index: number, value: boolean): void {
+        if (value) {
+            this.setBit(index);
+        } else {
+            this.clearBit(index);
+        }
     }
 }

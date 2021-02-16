@@ -31,7 +31,18 @@ export class Debug {
         CYCLE_DISPLAY_BUTTON.querySelector('label')!.innerText = DisplayType[this.activeDisplayType];
     }
 
-    CPUPaused = true;
+    private _clockPaused = true;
+    get clockPaused(): boolean {
+        return this._clockPaused;
+    }
+    set clockPaused(value: boolean) {
+        this._clockPaused = value;
+        if (value) {
+            PAUSE_CONTINUE_IMAGE.src = "./icons/play.svg";
+        } else {
+            PAUSE_CONTINUE_IMAGE.src = "./icons/pause.svg";
+        }
+    }
 
     constructor(public cpu: CPU, public clock: Clock) {
         this.memoryEditor = new MemoryEditor(cpu, this);
@@ -86,28 +97,18 @@ export class Debug {
         this.cpu.memory.init();
         this.lastInstructions.reset();
 
+        // TODO: ROM loading should not be done in debug.ts
         const bootROM = await ROM.load('boot-rom.gb');
         this.cpu.memory.write(0, new Uint8Array(bootROM));
     }
 
     step() {
-        this.setCPUPaused(true);
-        this.cpu.executeInstruction();
+        this.clockPaused = true;
+        this.clock.step();
     }
 
     togglePaused() {
-        this.setCPUPaused(!this.CPUPaused);
-    }
-
-    setCPUPaused(paused: boolean) {
-        // TODO: Toggle the icon
-        this.CPUPaused = paused;
-        if (paused) {
-            PAUSE_CONTINUE_IMAGE.src = "./icons/play.svg";
-        }
-        else {
-            PAUSE_CONTINUE_IMAGE.src = "./icons/pause.svg";
-        }
+        this.clockPaused = !this.clockPaused;
     }
 
     afterTick(): void {

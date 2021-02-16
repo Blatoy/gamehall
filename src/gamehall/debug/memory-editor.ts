@@ -62,13 +62,13 @@ export class MemoryEditor {
             this.rowOffset = selectedRow - (ROW_COUNT / 2);
         }
 
-        OPCODE_AT_SELECTION.innerHTML = this.cpu.getInstruction(this.selectedPosition).instruction?.name || '???';
+        OPCODE_AT_SELECTION.innerHTML = this.cpu.getInstructionFromMemory(this.selectedPosition).instruction?.name || '???';
     }
 
     constructor(private cpu: CPU, debug: Debug) {
         this.cpu.preExecuteHooks.push((_, offset) => {
-            if (!debug.CPUPaused && this.breakpoints.includes(offset) && !this.skipNextBreakpoint) {
-                debug.CPUPaused = true;
+            if (!debug.clockPaused && this.breakpoints.includes(offset) && !this.skipNextBreakpoint) {
+                debug.clockPaused = true;
                 this.skipNextBreakpoint = true;
                 return true;
             }
@@ -182,7 +182,7 @@ export class MemoryEditor {
     // follow pc
     updateMemoryTable(): void {
         const pcValue = this.cpu.registers.pc.getUint();
-        const instruction = this.cpu.getInstruction(pcValue);
+        const instruction = this.cpu.getInstructionFromMemory(pcValue);
         const instructionOpcodeLength = instruction.opCodes.length;
         const instructionArgLength = getInstructionArgLength(instruction.instruction?.name);
         if (FOLLOW_PC.checked) {

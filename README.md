@@ -1,12 +1,5 @@
-## TODO
-- Read bootrom + cartridge 
-- Implement instructions
-    - System to convert separate instruction files into one big array for fast access
-    - Unit tests
-    - Coding
-- Make the CPU alive
-- Rendering (UI + Screen)
-
-## Blog post
-- Binch :)
-- Fake todo
+## Good sources
+- https://gbdev.io/pandocs/#video-display
+- http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
+- https://meganesulli.com/generate-gb-opcodes/
+- https://fms.komkon.org/GameBoy/Tech/Software.html
