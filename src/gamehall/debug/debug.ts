@@ -1,3 +1,4 @@
+import { Clock } from "../clock.js";
 import { CPU } from "../cpu.js";
 import { hotkeyListeners } from "../hotkeys.js";
 import { ROM } from "../rom.js";
@@ -32,10 +33,10 @@ export class Debug {
 
     CPUPaused = true;
 
-    constructor(public cpu: CPU) {
+    constructor(public cpu: CPU, public clock: Clock) {
         this.memoryEditor = new MemoryEditor(cpu, this);
         this.lastInstructions = new LastInstructions(this);
-        this.speed = new Speed(cpu);
+        this.speed = new Speed(clock);
 
         CYCLE_DISPLAY_BUTTON.addEventListener("click", () => {
             this.cycleDisplayType();

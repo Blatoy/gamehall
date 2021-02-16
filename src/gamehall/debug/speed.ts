@@ -1,10 +1,10 @@
-import { CPU } from "../cpu.js";
+import { Clock } from "../clock.js";
 
 const SPEED_RANGE = document.getElementById("speed-range") as HTMLInputElement;
 const SPEED_INPUT = document.getElementById("speed-input") as HTMLInputElement;
 
 export class Speed {
-    constructor(private cpu: CPU) {
+    constructor(private clock: Clock) {
         SPEED_RANGE.addEventListener('input', () => {
             SPEED_INPUT.value = SPEED_RANGE.value;
             this.updateSpeed();
@@ -16,6 +16,6 @@ export class Speed {
     }
 
     updateSpeed(): void {
-        this.cpu.speedFactor = parseFloat(SPEED_INPUT.value);
+        this.clock.speedFactor = parseFloat(SPEED_INPUT.value);
     }
 }

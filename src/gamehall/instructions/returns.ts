@@ -63,7 +63,7 @@ const returnCodes: Instruction[] = [
         code: 0xD9,
         name: 'RETI',
         execute: (cpu: CPU) => {
-            cpu.interruptMasterEnableFlag = false;
+            cpu.interruptMasterEnableFlag = true;
             const retAddr = cpu.stackPop16();
             cpu.jump(retAddr.getUint());
             return { clockCycles: 4 };

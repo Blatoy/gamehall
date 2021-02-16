@@ -21,10 +21,6 @@ export class CPU {
     readonly registerBuffer = new ArrayBuffer(12);
     readonly registerData = new Binch(this.registerBuffer);
 
-    speedFactor = 1;
-    /** One CPU tick may not take longer than this many milliseconds. */
-    maxExecutionTime = 200;
-
     /**
      * @example
      * `
@@ -139,32 +135,7 @@ export class CPU {
         }
     }
 
-    /** Executes the next number of milliseconds of clock cycles. */
-    tickCPU(duration: number) {
-        if (duration > this.maxExecutionTime) {
-            console.warn(`Cannot keep up! Did the system time change or is the server overloaded? Running ${duration - this.maxExecutionTime}ms behind`);
-            duration = this.maxExecutionTime;
-        }
-
-        const clockCycleDuration = CPU_CYCLE_SPEED / this.speedFactor;
-        while (duration > 0) {
-            // TODO: Check interrupt
-
-            const { instruction, result } = this.executeInstruction();
-            if (result === undefined) {
-                // Execution of this instruction was cancelled
-                break;
-            }
-
-            if (result.clockCycles <= 0) {
-                console.error('Instruction', instruction.name, 'returned invalid clock cycles', result.clockCycles);
-                result.clockCycles = 1;
-            }
-            duration -= result.clockCycles * clockCycleDuration;
-        }
-    }
-
-    executeInstruction(): { instruction: Instruction, result?: InstructionExecuteOutput} {
+    executeInstruction(): { instruction: Instruction, elapsed: number | null } {
         // TODO: Check interrupt
         
         const pcValue = this.registers.pc.getUint();
@@ -180,13 +151,13 @@ export class CPU {
             for (const hook of this.preExecuteHooks) {
                 if (hook(instruction.name, pcValue)) {
                     this.registers.pc.setUint(pcValue);
-                    return { instruction };
+                    return { instruction, elapsed: null };
                 }
             }
 
-            const result = { instruction, result: instruction.execute(this) };
+            const result = instruction.execute(this);
             executeHooks(this.postExecuteHooks, instruction.name, pcValue);
-            return result;
+            return { instruction, elapsed: CPU_CYCLE_SPEED * result.clockCycles };
         } catch (err) {
             if (err instanceof NotImplementedError) {
                 throw new NotImplementedError('Not implemented instruction ' + instruction.name + ' opcode ' + opCodes.map(c => toHex(c)));
