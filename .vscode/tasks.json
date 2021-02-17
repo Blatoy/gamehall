@@ -1,0 +1,78 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Do Everything",
+            "dependsOn": [
+                "Start Server (dev)",
+                "Build (dev)",
+                "Test"
+            ]
+        },
+        {
+            "label": "Start Server (dev)",
+            "command": "npm",
+            "type": "shell",
+            "args": ["run", "start:dev"],
+            "presentation": {
+                "reveal": "always",
+                "group": "Together"
+            }
+        },
+        {
+            "label": "Build (dev)",
+            "command": "npm",
+            "type": "shell",
+            "args": ["run", "build:dev"],
+            "problemMatcher": [
+                "$tsc-watch"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "group": "Together"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Test",
+            "command": "npm",
+            "type": "shell",
+            "args": ["run", "test"],
+            "presentation": {
+                "reveal": "always",
+                "group": "Together"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Start Server",
+            "command": "npm",
+            "type": "shell",
+            "args": ["run", "start"],
+            "presentation": {
+                "reveal": "always",
+                "group": "Together"
+            }
+        },
+        {
+            "label": "Build",
+            "command": "npm",
+            "type": "shell",
+            "args": ["run", "build"],
+            "problemMatcher": [
+                "$tsc-watch"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "group": "Together"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

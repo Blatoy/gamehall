@@ -1,7 +1,7 @@
+import { Cartridge } from "../cartridge.js";
 import { Clock } from "../clock.js";
 import { CPU } from "../cpu.js";
 import { hotkeyListeners } from "../hotkeys.js";
-import { ROM } from "../rom.js";
 import { toBinary, toHex } from "../utils.js";
 import { LastInstructions } from "./last-instructions.js";
 import { MemoryEditor } from "./memory-editor.js";
@@ -98,8 +98,6 @@ export class Debug {
         this.lastInstructions.reset();
 
         // TODO: ROM loading should not be done in debug.ts
-        const bootROM = await ROM.load('boot-rom.gb');
-        this.cpu.memory.write(0, new Uint8Array(bootROM));
     }
 
     step() {

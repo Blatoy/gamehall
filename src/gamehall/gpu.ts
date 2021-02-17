@@ -12,7 +12,7 @@ export class GPU {
         this.availableTime += time;
         
         // Debug scanline
-       /* this.scanY++;
+        this.scanY++;
         if (this.scanY > 1000) {
             this.scanY = 0;
             this.memory.uint8Array[0xFF44]++;
@@ -22,7 +22,7 @@ export class GPU {
             }
             // request interrupt
             this.memory.uint8Array[0xFF0F] = 0xFF;
-        }*/
+        }
 
         // background and character/tile maps should be stored as Uint8Arrays (color indices).
         // we paint scanlines onto a temporary ImageData, which is painted to the canvas once a frame completes (or when we took to long to paint it)

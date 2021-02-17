@@ -86,6 +86,8 @@ export class MemoryEditor {
                 let targetAddress = getValueFromString(this.cpu, GOTO_INPUT.value);
                 if (ev.shiftKey) {
                     this.cpu.jump(targetAddress);
+                } if(ev.ctrlKey) {
+                    this.toggleBreakpointAt(targetAddress);
                 } else {
                     this.selectedPosition = targetAddress;
                 }
@@ -247,6 +249,15 @@ export class MemoryEditor {
         OPCODE_AT_PC.innerHTML = instruction.instruction?.name || '???';
     }
 
+    toggleBreakpointAt(address: number) {
+        const breakpointIndex = this.breakpoints.indexOf(address)
+        if (breakpointIndex < 0) {
+            this.breakpoints.push(address);
+        } else {
+            this.breakpoints.splice(breakpointIndex, 1);
+        }
+    }
+
     clickCell(event: MouseEvent, row: number, column: number): void {
         event.preventDefault();
         FOLLOW_PC.checked = false;
@@ -260,12 +271,7 @@ export class MemoryEditor {
             this.cpu.jump(position);
         } else if (event.ctrlKey) {
             // Toggle breakpoint
-            const bpIdx = this.breakpoints.indexOf(position)
-            if (bpIdx < 0) {
-                this.breakpoints.push(position);
-            } else {
-                this.breakpoints.splice(bpIdx, 1);
-            }
+            this.toggleBreakpointAt(position);
         } else {
             // Select position
             this.selectedPosition = position;

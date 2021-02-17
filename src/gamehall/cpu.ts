@@ -142,7 +142,7 @@ export class CPU {
         return this.getInstruction(this.memory.data, byteOffset);
     }
 
-    executeInstruction(): { instruction: Instruction, elapsed: number | null } {
+    executeInstruction(): { instruction: Instruction, result?: InstructionExecuteOutput, elapsed: number | null } {
         // TODO: Check interrupt
         
         const pcValue = this.registers.pc.getUint();
@@ -164,7 +164,7 @@ export class CPU {
 
             const result = instruction.execute(this);
             executeHooks(this.postExecuteHooks, instruction.name, pcValue);
-            return { instruction, elapsed: CPU_CYCLE_SPEED * result.clockCycles };
+            return { instruction, result, elapsed: CPU_CYCLE_SPEED * result.clockCycles };
         } catch (err) {
             if (err instanceof NotImplementedError) {
                 throw new NotImplementedError('Not implemented instruction ' + instruction.name + ' opcode ' + opCodes.map(c => toHex(c)));
