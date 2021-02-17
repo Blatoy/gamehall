@@ -1,3 +1,6 @@
+## TODO
+- Breakpoints for register/flag writes
+
 ## Good sources
 - https://gbdev.io/pandocs/#video-display
 - http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf

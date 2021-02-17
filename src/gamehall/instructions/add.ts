@@ -11,8 +11,7 @@ function add(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutp
     cpu.flags.z.compute(a);
     cpu.flags.n.clear();    
     cpu.flags.c.setValue(v1 + v2 > 255);
-    cpu.flags.h.setValue(((v1 & 0xFFF) + (v2 & 0xFFF)) & 0x1000);
-
+    cpu.flags.h.setValue(((v1 & 0xF) + (v2 & 0xF)) & 0x10);
     return { clockCycles };
 }
 

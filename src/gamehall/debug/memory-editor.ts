@@ -83,6 +83,8 @@ export class MemoryEditor {
     initInputs(): void {
         GOTO_INPUT.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (ev.key === "Enter") {
+                FOLLOW_PC.checked = false;
+    
                 let targetAddress = getValueFromString(this.cpu, GOTO_INPUT.value);
                 if (ev.shiftKey) {
                     this.cpu.jump(targetAddress);
@@ -289,11 +291,13 @@ export class MemoryEditor {
         CTX.globalAlpha = 0.5;
         CTX.fillStyle = "white";
 
+        // Scroll bar
         const scrollHeight = CANVAS.height / 10;
         const scrollPercentage = this.rowOffset / MAX_ROW_OFFSET;
         CTX.fillRect(0, scrollPercentage * Math.max(0, CANVAS.height - scrollHeight), CANVAS.width, scrollHeight);
         CTX.globalAlpha = 1;
         
+        // PC
         const pcScrollPercentage = this.cpu.registers.pc.getUint() / MEMORY_SIZE;
         const pcScrollHeight = 3;
         CTX.fillStyle = "red";
