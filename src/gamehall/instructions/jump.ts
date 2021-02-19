@@ -1,5 +1,5 @@
 import { CPU } from "../cpu.js";
-import { Instruction, NotImplementedError } from "../instruction.js";
+import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 
 const jumpAbsoluteCodes: Instruction[] = [
     {
@@ -130,47 +130,52 @@ const jumpRelativeCodes: Instruction[] = [
     }
 ];
 
+function rstJump(cpu: CPU, address: number): InstructionExecuteOutput {
+    cpu.stackPush(cpu.registers.pc);
+    cpu.jump(address);
+    return { clockCycles: 4 };
+}
+
 const restartCodes: Instruction[] = [
-    
     {
         code: 0xC7,
         name: 'RST 0x00',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x00)
     },
     {
         code: 0xCF,
         name: 'RST 0x08',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x08)
     },
     {
         code: 0xD7,
         name: 'RST 0x10',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x10)
     },
     {
         code: 0xDF,
         name: 'RST 0x18',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x18)
     },
     {
         code: 0xE7,
         name: 'RST 0x20',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x20)
     },
     {
         code: 0xEF,
         name: 'RST 0x28',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x28)
     },
     {
         code: 0xF7,
         name: 'RST 0x30',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x30)
     },
     {
         code: 0xFF,
         name: 'RST 0x38',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => rstJump(cpu, 0x38)
     }
 ];
 
