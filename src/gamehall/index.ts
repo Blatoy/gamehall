@@ -5,6 +5,7 @@ import { GPU } from "./gpu.js";
 import { addDocumentListener } from "./hotkeys.js";
 import { Memory } from "./memory.js";
 import { Cartridge } from "./cartridge.js";
+import { Screen } from './screen.js';
 
 async function main() {
     const memory = new Memory();
@@ -21,7 +22,10 @@ async function main() {
     const cpu = new CPU(memory);
     const gpu = new GPU(memory);
     const clock = new Clock(cpu, gpu);
-    const debug = new Debug(cpu, clock);
+    const screen = new Screen(document.getElementById("game-screen") as HTMLCanvasElement);
+    const debug = new Debug(cpu, gpu, screen, clock);
+
+    gpu.renderedFrameHooks.push((imgData) => screen.renderFrame(imgData));
 
     debug.addHotkeyListener();
     addDocumentListener();

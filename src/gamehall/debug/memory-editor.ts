@@ -110,6 +110,8 @@ export class MemoryEditor {
                 this.selectedPosition += COLUMN_COUNT;
             } else if (ev.key === "Enter") {
                 this.cpu.pointer8(this.selectedPosition).setUint(getValueFromString(this.cpu, SET_VALUE_INPUT.value));
+                SET_VALUE_INPUT.value = "";
+
                 if (ev.shiftKey) {
                     this.selectedPosition--;
                 } else if (!ev.ctrlKey) {

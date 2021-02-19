@@ -8,11 +8,15 @@ import { executeHooks, toHex } from "./utils.js";
 
 /**
  * Duration of one clock cycle (in ms).
- * 
- * Machine Cycles: 1.05MHz = 1 050 000 Hz
- * Clock Cycles:   4.19MHz = 4 190 000 Hz
+ * 4.19MHz = 4 190 000 Hz
  */
 export const CPU_CYCLE_SPEED = 1000 / 4_190_000;
+
+/**
+ * Duration of one machine cycle (in ms).
+ * 1.05MHz = 1 050 000 Hz
+ */
+export const MACHINE_CYCLE_SPEED = 1000 / 1_050_000;
 
 export class CPU {
 

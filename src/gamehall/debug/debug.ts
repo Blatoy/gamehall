@@ -1,6 +1,8 @@
+import { Screen } from '../screen.js';
 import { Cartridge } from "../cartridge.js";
 import { Clock } from "../clock.js";
 import { CPU } from "../cpu.js";
+import { GPU } from "../gpu.js";
 import { hotkeyListeners } from "../hotkeys.js";
 import { toBinary, toHex } from "../utils.js";
 import { LastInstructions } from "./last-instructions.js";
@@ -44,7 +46,7 @@ export class Debug {
         }
     }
 
-    constructor(public cpu: CPU, public clock: Clock) {
+    constructor(public cpu: CPU, public gpu: GPU, public screen: Screen, public clock: Clock) {
         this.memoryEditor = new MemoryEditor(cpu, this);
         this.lastInstructions = new LastInstructions(this);
         this.speed = new Speed(clock);
@@ -103,6 +105,7 @@ export class Debug {
     step() {
         this.clockPaused = true;
         this.clock.step();
+        this.screen.renderFrame(this.gpu.frameImageData);
     }
 
     togglePaused() {
