@@ -175,7 +175,42 @@ export class GPU {
         return true;
     }
 
-    getBgMapData1(px: number, py: number): number {
+    /**
+     * Returns palette index for given pixel coordinate into tile data.
+     * @param bgMap BGMap 0 is $9800-9BFF
+     * BGMap 1 is $9C00-9FFF
+     * @param block Block 0 is $8000-87FF
+     * Block 1 is $8800-8FFF
+     * Block 2 is $9000-97FF
+     */
+    getTileData(px: number, py: number, bgMap: number, block: number): number {
+        let bgMapAddress: number;
+        switch (bgMap) {
+            case 0:
+                bgMapAddress = 0x9800;
+                break;
+            case 1:
+                bgMapAddress = 0x9C00;
+                break;
+            default:
+                throw new Error('Unknown bgMap ' + bgMap);
+        }
+
+        let blockAddress: number;
+        switch (block) {
+            case 0:
+                blockAddress = 0x8000;
+                break;
+            case 1:
+                blockAddress = 0x8800;
+                break;
+            case 2:
+                blockAddress = 0x9000;
+                break;
+            default:
+                throw new Error('Unknown block ' + block);
+        }
+
         /*
                          Background map data
                  0                      1
@@ -224,7 +259,7 @@ export class GPU {
 
         const tx = Math.floor(px / TILE_WIDTH);
         const ty = Math.floor(py / TILE_HEIGHT);
-        const tileIndex = this.memory.uint8Array[0x9800 + tx + ty * TILE_X_COUNT];
+        const tileIndex = this.memory.uint8Array[bgMapAddress + tx + ty * TILE_X_COUNT];
 
         // 2: px, py to byte offset (in the tile)
         const rx = px % TILE_WIDTH;
@@ -233,8 +268,8 @@ export class GPU {
 
         // 3: Retrieve bit pair at the correct index
         // TODO: 3 different block indexing methods
-        const tileByteUpper = this.memory.uint8Array[0x8000 + tileIndex * 16 + byteOffset];
-        const tileByteLower = this.memory.uint8Array[0x8000 + tileIndex * 16 + byteOffset + 1];
+        const tileByteUpper = this.memory.uint8Array[blockAddress + tileIndex * 16 + byteOffset];
+        const tileByteLower = this.memory.uint8Array[blockAddress + tileIndex * 16 + byteOffset + 1];
         const maskedByteUpper = (0b1000_0000 >> rx) & tileByteUpper;
         const maskedByteLower = (0b1000_0000 >> rx) & tileByteLower;
 
@@ -247,6 +282,10 @@ export class GPU {
         }
 
         return bitValue;
+    }
+
+    getBgMapData1(px: number, py: number): number {
+        return this.getTileData(px, py, 0, 0);
     }
 }
 
