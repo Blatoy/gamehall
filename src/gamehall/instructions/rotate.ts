@@ -19,7 +19,17 @@ export default [
     {
         code: 0x07,
         name: 'RLCA',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => { 
+            const value = cpu.registers.a.getUint();
+            const bit7 = getBit(value, 7);
+            // TODO: Check if Z is reset or not (different sources don't use the same)
+            cpu.flags.reset();
+            cpu.flags.c.setValue(bit7);
+
+            cpu.registers.a.setUint(((value & 0b0111_1111) << 1) | (bit7 ? 1 : 0));
+
+            return { clockCycles: 1 };
+        }
     },
     {
         code: 0x1F,
