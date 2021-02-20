@@ -1,11 +1,11 @@
 import { CPU } from "../cpu.js";
-import { InstructionDefinition, InstructionExecuteOutput, NotImplementedError } from "../instruction.js";
+import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 import { Pointer8 } from "../pointer.js";
 
-/** Add r to A. */
-function addCarry(cpu: CPU, value: Pointer8, clockCycles = 2): InstructionExecuteOutput {
+/** Add r and carry to A. */
+function addCarry(cpu: CPU, value: Pointer8): InstructionExecuteOutput {
     const a = cpu.registers.a;
-    const carry = cpu.flags.c.get() ? 1 : 0;
+    const carry = cpu.flags.c.getValue();
 
     const v1 = a.getUint();
     const v2 = value.getUint();
@@ -15,10 +15,10 @@ function addCarry(cpu: CPU, value: Pointer8, clockCycles = 2): InstructionExecut
     cpu.flags.n.clear();    
     cpu.flags.c.setValue(v1 + v2 + carry > 255);
     cpu.flags.h.setValue(((v1 & 0xF) + (v2 & 0xF) + carry) & 0x10);
-    return { clockCycles };
+    return { clockCycles: 2 };
 }
 
-export default [
+const adcCodes: Instruction[] = [
     {
         code: 0x88,
         name: 'ADC a,b',
@@ -64,4 +64,6 @@ export default [
         name: 'ADC a,d8',
         execute: (cpu: CPU) => addCarry(cpu, cpu.next8())
     }
-] as InstructionDefinition[];
+];
+
+export default adcCodes;

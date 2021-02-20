@@ -16,7 +16,7 @@ function add(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutp
 }
 
 /** Add r to A. */
-function add16(cpu: CPU, value: Pointer16, clockCycles = 2): InstructionExecuteOutput {
+function add16(cpu: CPU, value: Pointer16): InstructionExecuteOutput {
     const hl = cpu.registers.hl;
     const v1 = hl.getUint();
     const v2 = value.getUint();
@@ -29,7 +29,7 @@ function add16(cpu: CPU, value: Pointer16, clockCycles = 2): InstructionExecuteO
     // TODO: Check flags are computed properly
     cpu.flags.c.setValue(v1 + v2 > 0xFFFF);
     cpu.flags.h.setValue(((v1 & 0xFFF) + (v2 & 0xFFF)) & 0x1000);
-    return { clockCycles };
+    return { clockCycles: 2 };
 }
 
 const addCodes: Instruction[] = [

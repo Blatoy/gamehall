@@ -1,5 +1,5 @@
 import { CPU } from "../../cpu.js";
-import { InstructionDefinition, InstructionExecuteOutput } from "../../instruction.js";
+import { Instruction, InstructionExecuteOutput } from "../../instruction.js";
 import { Pointer8 } from "../../pointer.js";
 
 function swap(cpu: CPU, value: Pointer8, clockCycles = 2): InstructionExecuteOutput {
@@ -11,7 +11,12 @@ function swap(cpu: CPU, value: Pointer8, clockCycles = 2): InstructionExecuteOut
     return { clockCycles };
 }
 
-export default [
+const swapCodes: Instruction[] = [
+    {
+        code: 0x37,
+        name: 'SWAP a',
+        execute: (cpu: CPU) => swap(cpu, cpu.registers.a)
+    },
     {
         code: 0x30,
         name: 'SWAP b',
@@ -46,10 +51,7 @@ export default [
         code: 0x36,
         name: 'SWAP (hl)',
         execute: (cpu: CPU) => swap(cpu, cpu.pointerHL8(), 4)
-    },
-    {
-        code: 0x37,
-        name: 'SWAP a',
-        execute: (cpu: CPU) => swap(cpu, cpu.registers.a)
     }
-] as InstructionDefinition[];
+];
+
+export default swapCodes;
