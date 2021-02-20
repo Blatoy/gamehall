@@ -7,6 +7,8 @@ export abstract class Pointer {
 }
 
 export class Pointer8 extends Pointer {
+    private readonly __type!: this;
+
     get byteSize(): number {
         return 1;
     }
@@ -53,6 +55,8 @@ export class Pointer8 extends Pointer {
 }
 
 export class Pointer16 extends Pointer {
+    private readonly __type!: this;
+
     get byteSize(): number {
         return 2;
     }
