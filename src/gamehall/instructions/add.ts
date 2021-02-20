@@ -1,6 +1,6 @@
 import { CPU } from "../cpu.js";
 import { Instruction, InstructionExecuteOutput, NotImplementedError } from "../instruction.js";
-import { Pointer8 } from "../pointer.js";
+import { Pointer16, Pointer8 } from "../pointer.js";
 
 /** Add r to A. */
 function add(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
@@ -15,26 +15,43 @@ function add(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutp
     return { clockCycles };
 }
 
+/** Add r to A. */
+function add16(cpu: CPU, value: Pointer16, clockCycles = 2): InstructionExecuteOutput {
+    const hl = cpu.registers.hl;
+    const v1 = hl.getUint();
+    const v2 = value.getUint();
+
+    // TODO: Check if endianness is an issue here (it should not but...)
+    hl.setUint(v1 + v2);
+
+    cpu.flags.n.clear();
+
+    // TODO: Check flags are computed properly
+    cpu.flags.c.setValue(v1 + v2 > 0xFFFF);
+    cpu.flags.h.setValue(((v1 & 0xFFF) + (v2 & 0xFFF)) & 0x1000);
+    return { clockCycles };
+}
+
 const addCodes: Instruction[] = [
     {
         code: 0x09,
         name: 'ADD hl,bc',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => add16(cpu, cpu.registers.bc)
     },
     {
         code: 0x19,
         name: 'ADD hl,de',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => add16(cpu, cpu.registers.de)
     },
     {
         code: 0x29,
         name: 'ADD hl,hl',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => add16(cpu, cpu.registers.hl)
     },
     {
         code: 0x39,
         name: 'ADD hl,sp',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => add16(cpu, cpu.registers.sp)
     },
     {
         code: 0x87,
