@@ -9,9 +9,9 @@ const returnCodes: Instruction[] = [
             const retAddr = cpu.stackPop16();
             if (cpu.flags.z.get() === false) {
                 cpu.jump(retAddr.getUint());
-                return { clockCycles: 5 };
+                return { machineCycles: 5 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     },
     {
@@ -21,9 +21,9 @@ const returnCodes: Instruction[] = [
             const retAddr = cpu.stackPop16();
             if (cpu.flags.z.get() === true) {
                 cpu.jump(retAddr.getUint());
-                return { clockCycles: 5 };
+                return { machineCycles: 5 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     },
     {
@@ -32,7 +32,7 @@ const returnCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             const retAddr = cpu.stackPop16();
             cpu.jump(retAddr.getUint());
-            return { clockCycles: 4 };
+            return { machineCycles: 4 };
         }
     },
     {
@@ -42,9 +42,9 @@ const returnCodes: Instruction[] = [
             const retAddr = cpu.stackPop16();
             if (cpu.flags.c.get() === false) {
                 cpu.jump(retAddr.getUint());
-                return { clockCycles: 5 };
+                return { machineCycles: 5 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     },
     {
@@ -54,9 +54,9 @@ const returnCodes: Instruction[] = [
             const retAddr = cpu.stackPop16();
             if (cpu.flags.c.get() === true) {
                 cpu.jump(retAddr.getUint());
-                return { clockCycles: 5 };
+                return { machineCycles: 5 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     },
     {
@@ -66,7 +66,7 @@ const returnCodes: Instruction[] = [
             cpu.interruptMasterEnableFlag = true;
             const retAddr = cpu.stackPop16();
             cpu.jump(retAddr.getUint());
-            return { clockCycles: 4 };
+            return { machineCycles: 4 };
         }
     }
 ];

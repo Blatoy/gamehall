@@ -3,7 +3,7 @@ import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 import { Pointer8 } from "../pointer.js";
 
 /** Execute CP between A and r */
-function cp(cpu: CPU, register: Pointer8, clockCycles = 1): InstructionExecuteOutput {
+function cp(cpu: CPU, register: Pointer8, machineCycles = 1): InstructionExecuteOutput {
     const a = cpu.registers.a.getUint();
     const value = register.getUint();
     cpu.flags.z.compute(a - value);
@@ -11,7 +11,7 @@ function cp(cpu: CPU, register: Pointer8, clockCycles = 1): InstructionExecuteOu
     cpu.flags.h.setValue((a & 0xF) < (value & 0xF));
     cpu.flags.c.setValue(a < value);
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const cpCodes: Instruction[] = [

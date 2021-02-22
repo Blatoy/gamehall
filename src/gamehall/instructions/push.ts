@@ -7,7 +7,7 @@ const pushCodes: Instruction[] = [
         name: 'PUSH bc',
         execute: (cpu: CPU) => {
             cpu.stackPush(cpu.registers.bc);
-            return { clockCycles: 4 };
+            return { machineCycles: 4 };
         }
     },
     {
@@ -15,7 +15,7 @@ const pushCodes: Instruction[] = [
         name: 'PUSH de',
         execute: (cpu: CPU) => {
             cpu.stackPush(cpu.registers.de);
-            return { clockCycles: 4 };
+            return { machineCycles: 4 };
         }
     },
     {
@@ -23,7 +23,7 @@ const pushCodes: Instruction[] = [
         name: 'PUSH hl',
         execute: (cpu: CPU) => {
             cpu.stackPush(cpu.registers.hl);
-            return { clockCycles: 4 };
+            return { machineCycles: 4 };
         }
     },
     {
@@ -31,7 +31,7 @@ const pushCodes: Instruction[] = [
         name: 'PUSH af',
         execute: (cpu: CPU) => {
             cpu.stackPush(cpu.registers.af);
-            return { clockCycles: 4 };
+            return { machineCycles: 4 };
         }
     }
 ];

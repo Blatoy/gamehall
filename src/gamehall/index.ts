@@ -1,5 +1,5 @@
 import { Clock } from "./clock.js";
-import { CPU, CPU_CYCLE_SPEED } from "./cpu.js";
+import { CPU, MACHINE_CYCLE_SPEED } from "./cpu.js";
 import { Debug } from "./debug/debug.js";
 import { GPU } from "./gpu.js";
 import { addDocumentListener } from "./hotkeys.js";
@@ -61,9 +61,9 @@ async function main() {
         }
 
         // If speed factor is too small, while loop will still run 1 instruction per frame
-        // So we have to wait ("sleep") for the excess time beyond 1 clock cycle's length
-        const clockCycleLength = CPU_CYCLE_SPEED / clock.speedFactor;
-        const waitTime = duration <= 0 ? 0 : Math.max(0, clockCycleLength - duration);
+        // So we have to wait ("sleep") for the excess time beyond 1 machine cycle's length
+        const machineCycleLength = MACHINE_CYCLE_SPEED / clock.speedFactor;
+        const waitTime = duration <= 0 ? 0 : Math.max(0, machineCycleLength - duration);
         if (waitTime > 0) {
             setTimeout(() => window.requestAnimationFrame(time => tick(time)), waitTime);
         } else {

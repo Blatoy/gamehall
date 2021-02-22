@@ -49,7 +49,7 @@ export namespace Instruction {
 export type InstructionExecute = (cpu: CPU) => InstructionExecuteOutput;
 
 export interface InstructionExecuteOutput {
-    clockCycles: number;
+    machineCycles: number;
 }
 
 /**

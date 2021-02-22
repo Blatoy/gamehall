@@ -10,9 +10,9 @@ const callCodes: Instruction[] = [
             if (cpu.flags.z.get() === false) {
                 cpu.stackPush(cpu.registers.pc);
                 cpu.jump(next);
-                return { clockCycles: 6 };
+                return { machineCycles: 6 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -23,9 +23,9 @@ const callCodes: Instruction[] = [
             if (cpu.flags.z.get() === true) {
                 cpu.stackPush(cpu.registers.pc);
                 cpu.jump(next);
-                return { clockCycles: 6 };
+                return { machineCycles: 6 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -35,7 +35,7 @@ const callCodes: Instruction[] = [
             const next = cpu.next16().getUint();
             cpu.stackPush(cpu.registers.pc);
             cpu.jump(next);
-            return { clockCycles: 6 };
+            return { machineCycles: 6 };
         }
     },
     {
@@ -46,9 +46,9 @@ const callCodes: Instruction[] = [
             if (cpu.flags.c.get() === false) {
                 cpu.stackPush(cpu.registers.pc);
                 cpu.jump(next);
-                return { clockCycles: 6 };
+                return { machineCycles: 6 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -59,9 +59,9 @@ const callCodes: Instruction[] = [
             if (cpu.flags.c.get() === true) {
                 cpu.stackPush(cpu.registers.pc);
                 cpu.jump(next);
-                return { clockCycles: 6 };
+                return { machineCycles: 6 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     }
 ];

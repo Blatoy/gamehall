@@ -13,7 +13,7 @@ export default [
             cpu.flags.c.setValue(getBit(value, 7));
             cpu.registers.a.setUint(((value & 0b0111_1111) << 1) | (carry ? 0b0000_0001 : 0));
             
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     },
     {
@@ -28,7 +28,7 @@ export default [
 
             cpu.registers.a.setUint(((value & 0b0111_1111) << 1) | (bit7 ? 1 : 0));
 
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     },
     {
@@ -41,7 +41,7 @@ export default [
             cpu.flags.c.setValue(getBit(value, 0));
             cpu.registers.a.setUint(((value & 0b1111_1110) >> 1) | (carry ? 0b1000_0000 : 0));
         
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     },
     {

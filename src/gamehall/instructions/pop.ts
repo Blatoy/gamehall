@@ -8,7 +8,7 @@ const popCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             const value = cpu.stackPop16();
             cpu.registers.bc.setUint(value.getUint());
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -17,7 +17,7 @@ const popCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             const value = cpu.stackPop16();
             cpu.registers.de.setUint(value.getUint());
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -26,7 +26,7 @@ const popCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             const value = cpu.stackPop16();
             cpu.registers.hl.setUint(value.getUint());
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -35,7 +35,7 @@ const popCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             const value = cpu.stackPop16();
             cpu.registers.af.setUint(value.getUint());
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     }
 ];

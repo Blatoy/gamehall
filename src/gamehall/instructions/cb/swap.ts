@@ -2,13 +2,13 @@ import { CPU } from "../../cpu.js";
 import { Instruction, InstructionExecuteOutput } from "../../instruction.js";
 import { Pointer8 } from "../../pointer.js";
 
-function swap(cpu: CPU, value: Pointer8, clockCycles = 2): InstructionExecuteOutput {
+function swap(cpu: CPU, value: Pointer8, machineCycles = 2): InstructionExecuteOutput {
     const high = 0b1111_0000 & value.getUint();
     value.setUint((value.getUint() << 4) | (high >> 4));
     cpu.flags.reset();
     cpu.flags.z.setValue(value.getUint() === 0);
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const swapCodes: Instruction[] = [

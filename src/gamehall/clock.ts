@@ -31,7 +31,7 @@ export class Clock {
     step(): number | null {
         if (this.cpu.checkInterrupts()) {
             // Interrupt!
-            // TODO: Check if this needs to consume clock cycles (because of the CALL instruction)
+            // TODO: Check if this needs to consume machine cycles (because of the CALL instruction)
         }
 
         let { instruction, elapsed } = this.cpu.executeInstruction();

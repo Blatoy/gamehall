@@ -3,47 +3,47 @@ import { Pointer16, Pointer8 } from "../pointer.js";
 import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 
 /** Load value from r1 into r2 */
-function load(cpu: CPU, to: Pointer8 | Pointer16, from: Pointer8 | Pointer16, clockCycles = 1): InstructionExecuteOutput {
+function load(cpu: CPU, to: Pointer8 | Pointer16, from: Pointer8 | Pointer16, machineCycles = 1): InstructionExecuteOutput {
     to.setUint(from.getUint());
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const uselessLoadCodes: Instruction[] = [
     {
         code: 0x7F,
         name: 'LD a,a',
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     },
     {
         code: 0x40,
         name: 'LD b,b',
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     },
     {
         code: 0x49,
         name: 'LD c,c',
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     },
     {
         code: 0x52,
         name: 'LD d,d',
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     },
     {
         code: 0x5B,
         name: 'LD e,e',
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     },
     {
         code: 0x64,
         name: 'LD h,h',
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     },
     {
         code: 0x6D,
         name: 'LD l,l',
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     }
 ];
 
@@ -430,7 +430,7 @@ const load16Codes: Instruction[] = [
             cpu.flags.c.setValue(value > 0xFFFF);
             cpu.flags.h.setValue(((sp & 0xFFFFF) + (s8 & 0xFFFFF)) & 0x100000);
 
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
 ];

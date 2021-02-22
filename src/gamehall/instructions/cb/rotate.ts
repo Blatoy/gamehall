@@ -4,7 +4,7 @@ import { Instruction, InstructionExecuteOutput } from "../../instruction.js";
 import { Pointer8 } from "../../pointer.js";
 
 /** Rotate left. */
-function rl(cpu: CPU, register: Pointer8, clockCycles = 2): InstructionExecuteOutput {
+function rl(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecuteOutput {
     const carry = cpu.flags.c.get();
     const value = register.getUint();
     cpu.flags.reset();
@@ -12,11 +12,11 @@ function rl(cpu: CPU, register: Pointer8, clockCycles = 2): InstructionExecuteOu
     cpu.flags.c.setValue(getBit(value, 7));
     register.setUint(((value & 0b0111_1111) << 1) | (carry ? 0b0000_0001 : 0));
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 /** Rotate right. */
-function rr(cpu: CPU, register: Pointer8, clockCycles = 2): InstructionExecuteOutput {
+function rr(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecuteOutput {
     const carry = cpu.flags.c.get();
     const value = register.getUint();
     cpu.flags.reset();
@@ -24,7 +24,7 @@ function rr(cpu: CPU, register: Pointer8, clockCycles = 2): InstructionExecuteOu
     cpu.flags.c.setValue(getBit(value, 0));
     register.setUint(((value & 0b1111_1110) >> 1) | (carry ? 0b1000_0000 : 0));
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const rotateCodes: Instruction[] = [

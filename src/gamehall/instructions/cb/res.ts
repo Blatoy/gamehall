@@ -2,9 +2,9 @@ import { CPU } from "../../cpu.js";
 import { InstructionDefinition, InstructionExecuteOutput, NotImplementedError } from "../../instruction.js";
 import { Pointer8 } from "../../pointer.js";
 
-function resetBit(value: Pointer8, bitOffset: number, clockCycles = 2) : InstructionExecuteOutput {
+function resetBit(value: Pointer8, bitOffset: number, machineCycles = 2) : InstructionExecuteOutput {
     value.clearBit(bitOffset);
-    return { clockCycles };
+    return { machineCycles };
 }
 
 export default [

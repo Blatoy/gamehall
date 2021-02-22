@@ -3,7 +3,7 @@ import { Instruction, InstructionExecuteOutput, NotImplementedError } from "../i
 import { Pointer16, Pointer8 } from "../pointer.js";
 
 /** Add r to A. */
-function add(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
+function add(cpu: CPU, value: Pointer8, machineCycles = 1): InstructionExecuteOutput {
     const a = cpu.registers.a;
     const v1 = a.getUint();
     const v2 = value.getUint();
@@ -12,7 +12,7 @@ function add(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutp
     cpu.flags.n.clear();    
     cpu.flags.c.setValue(v1 + v2 > 255);
     cpu.flags.h.setValue(((v1 & 0xF) + (v2 & 0xF)) & 0x10);
-    return { clockCycles };
+    return { machineCycles };
 }
 
 /** Add r to A. */
@@ -29,7 +29,7 @@ function add16(cpu: CPU, value: Pointer16): InstructionExecuteOutput {
     // TODO: Check flags are computed properly
     cpu.flags.c.setValue(v1 + v2 > 0xFFFF);
     cpu.flags.h.setValue(((v1 & 0xFFF) + (v2 & 0xFFF)) & 0x1000);
-    return { clockCycles: 2 };
+    return { machineCycles: 2 };
 }
 
 const addCodes: Instruction[] = [

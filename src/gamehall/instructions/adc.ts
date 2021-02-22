@@ -15,7 +15,7 @@ function addCarry(cpu: CPU, value: Pointer8): InstructionExecuteOutput {
     cpu.flags.n.clear();    
     cpu.flags.c.setValue(v1 + v2 + carry > 255);
     cpu.flags.h.setValue(((v1 & 0xF) + (v2 & 0xF) + carry) & 0x10);
-    return { clockCycles: 2 };
+    return { machineCycles: 2 };
 }
 
 const adcCodes: Instruction[] = [

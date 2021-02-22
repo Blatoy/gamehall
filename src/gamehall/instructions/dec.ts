@@ -3,7 +3,7 @@ import { InstructionDefinition, InstructionExecuteOutput } from "../instruction.
 import { Pointer16, Pointer8 } from "../pointer.js";
 
 /** Decrement r by 1. */
-function dec(cpu: CPU, register: Pointer8 | Pointer16, clockCycles = 1): InstructionExecuteOutput {
+function dec(cpu: CPU, register: Pointer8 | Pointer16, machineCycles = 1): InstructionExecuteOutput {
     const oldValue = register.getUint();
     const newValue = oldValue - 1;
     register.setUint(newValue);
@@ -13,7 +13,7 @@ function dec(cpu: CPU, register: Pointer8 | Pointer16, clockCycles = 1): Instruc
         cpu.flags.h.setValue((oldValue & 0xF) < 1);
     }
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 export default [

@@ -4,7 +4,7 @@ import { Instruction, InstructionExecuteOutput } from "../../instruction.js";
 import { Pointer8 } from "../../pointer.js";
 
 /** Copy bit n of r into z. */
-function bit(cpu: CPU, value: Pointer8, index: number, clockCycles = 2): InstructionExecuteOutput {
+function bit(cpu: CPU, value: Pointer8, index: number, machineCycles = 2): InstructionExecuteOutput {
     if (getBit(value.getUint(), index)) {
         cpu.flags.z.clear();
     } else {
@@ -13,7 +13,7 @@ function bit(cpu: CPU, value: Pointer8, index: number, clockCycles = 2): Instruc
     cpu.flags.n.clear();
     cpu.flags.h.set();
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const bitCodes: Instruction[] = [

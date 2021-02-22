@@ -3,14 +3,14 @@ import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 import { Pointer8 } from "../pointer.js";
 
 /** Execute AND between A and r */
-function and(cpu: CPU, value: Pointer8, clockCycles = 1): InstructionExecuteOutput {
+function and(cpu: CPU, value: Pointer8, machineCycles = 1): InstructionExecuteOutput {
     const a = cpu.registers.a;
     a.setUint(a.getUint() & value.getUint());
     cpu.flags.reset();
     cpu.flags.z.compute(a);
     cpu.flags.h.set();
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const andCodes: Instruction[] = [

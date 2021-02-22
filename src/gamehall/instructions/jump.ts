@@ -9,9 +9,9 @@ const jumpAbsoluteCodes: Instruction[] = [
             const next = cpu.next16();
             if (cpu.flags.z.get() === false) {
                 cpu.jump(next.getUint());
-                return { clockCycles: 4 };
+                return { machineCycles: 4 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -21,7 +21,7 @@ const jumpAbsoluteCodes: Instruction[] = [
             // TODO: Endianness for all a16 jumps - The second byte of the object code (immediately following the opcode) corresponds to the
             // lower-order byte of a16 (bits 0-7), and the third byte of the object code corresponds to the higher-order byte (bits 8-15).
             cpu.jump(cpu.next16().getUint());
-            return { clockCycles: 4 };
+            return { machineCycles: 4 };
         }
     },
     {
@@ -31,9 +31,9 @@ const jumpAbsoluteCodes: Instruction[] = [
             const next = cpu.next16();
             if (cpu.flags.z.get() === true) {
                 cpu.jump(next.getUint());
-                return { clockCycles: 4 };
+                return { machineCycles: 4 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -43,9 +43,9 @@ const jumpAbsoluteCodes: Instruction[] = [
             const next = cpu.next16();
             if (cpu.flags.c.get() === false) {
                 cpu.jump(next.getUint());
-                return { clockCycles: 4 };
+                return { machineCycles: 4 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -55,9 +55,9 @@ const jumpAbsoluteCodes: Instruction[] = [
             const next = cpu.next16();
             if (cpu.flags.c.get() === true) {
                 cpu.jump(next.getUint());
-                return { clockCycles: 4 };
+                return { machineCycles: 4 };
             }
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -66,7 +66,7 @@ const jumpAbsoluteCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             // TODO: Endianness ;)
             cpu.jump(cpu.pointerHL16().getUint());
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     }
 ];
@@ -77,7 +77,7 @@ const jumpRelativeCodes: Instruction[] = [
         name: 'JR r8',
         execute: (cpu: CPU) => {
             cpu.jump(cpu.next8().getInt(), true);
-            return { clockCycles: 3 };
+            return { machineCycles: 3 };
         }
     },
     {
@@ -87,9 +87,9 @@ const jumpRelativeCodes: Instruction[] = [
             const next = cpu.next8();
             if (cpu.flags.z.get() === false) {
                 cpu.jump(next.getInt(), true);
-                return { clockCycles: 3 };
+                return { machineCycles: 3 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     },
     {
@@ -99,9 +99,9 @@ const jumpRelativeCodes: Instruction[] = [
             const next = cpu.next8();
             if (cpu.flags.z.get() === true) {
                 cpu.jump(next.getInt(), true);
-                return { clockCycles: 3 };
+                return { machineCycles: 3 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     },
     {
@@ -111,9 +111,9 @@ const jumpRelativeCodes: Instruction[] = [
             const next = cpu.next8();
             if (cpu.flags.c.get() === false) {
                 cpu.jump(next.getInt(), true);
-                return { clockCycles: 3 };
+                return { machineCycles: 3 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     },
     {
@@ -123,9 +123,9 @@ const jumpRelativeCodes: Instruction[] = [
             const next = cpu.next8();
             if (cpu.flags.c.get() === true) {
                 cpu.jump(next.getInt(), true);
-                return { clockCycles: 3 };
+                return { machineCycles: 3 };
             }
-            return { clockCycles: 2 };
+            return { machineCycles: 2 };
         }
     }
 ];
@@ -133,7 +133,7 @@ const jumpRelativeCodes: Instruction[] = [
 function rstJump(cpu: CPU, address: number): InstructionExecuteOutput {
     cpu.stackPush(cpu.registers.pc);
     cpu.jump(address);
-    return { clockCycles: 4 };
+    return { machineCycles: 4 };
 }
 
 const restartCodes: Instruction[] = [

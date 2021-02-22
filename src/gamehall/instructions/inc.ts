@@ -3,7 +3,7 @@ import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 import { Pointer16, Pointer8 } from "../pointer.js";
 
 /** Increment r by 1. */
-function inc(cpu: CPU, register: Pointer8 | Pointer16, clockCycles = 1): InstructionExecuteOutput {
+function inc(cpu: CPU, register: Pointer8 | Pointer16, machineCycles = 1): InstructionExecuteOutput {
     const oldValue = register.getUint();
     const newValue = oldValue + 1;
     register.setUint(newValue);
@@ -13,7 +13,7 @@ function inc(cpu: CPU, register: Pointer8 | Pointer16, clockCycles = 1): Instruc
         cpu.flags.h.setValue(((oldValue & 0xF) + 1) & 0x10);
     }
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const incCodes: Instruction[] = [

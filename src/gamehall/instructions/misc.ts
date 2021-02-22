@@ -4,9 +4,9 @@ import { Instruction, NotImplementedError } from "../instruction.js";
 const miscCodes: Instruction[] = [
     {
         name: 'NOP',
-        comment: 'Wastes a clock cycle.',
+        comment: 'Wastes a machine cycle.',
         code: 0x00,
-        execute: () => ({ clockCycles: 1 })
+        execute: () => ({ machineCycles: 1 })
     },
     {
         name: 'STOP',
@@ -24,7 +24,7 @@ const miscCodes: Instruction[] = [
         code: 0xF3,
         execute: (cpu: CPU) => {
             cpu.interruptMasterEnableFlag = false;
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     },
     {
@@ -34,7 +34,7 @@ const miscCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             // TODO: This should be done after the next instruction, not immediately (should we have a queueInterrupt?)
             cpu.interruptMasterEnableFlag = true;
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     },
     {
@@ -50,7 +50,7 @@ const miscCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             const zero = cpu.flags.z ? 1 : 0;
             cpu.registers.f.setUint(0b0001_0000 | (zero << 7));
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     },
     {
@@ -60,7 +60,7 @@ const miscCodes: Instruction[] = [
         execute: (cpu: CPU) => {
             // TODO: Does setUint8(negative number) do it goodly?
             cpu.registers.a.setUint(~cpu.registers.a.getUint());
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     },
     {
@@ -76,7 +76,7 @@ const miscCodes: Instruction[] = [
             } else {
                 cpu.flags.c.set();
             }
-            return { clockCycles: 1 };
+            return { machineCycles: 1 };
         }
     }
 ];

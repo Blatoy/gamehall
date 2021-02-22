@@ -3,7 +3,7 @@ import { Instruction, InstructionExecuteOutput } from "../instruction.js";
 import { Pointer8 } from "../pointer.js";
 
 /** Subtract r from A. */
-function sub(cpu: CPU, register: Pointer8, clockCycles = 1): InstructionExecuteOutput {
+function sub(cpu: CPU, register: Pointer8, machineCycles = 1): InstructionExecuteOutput {
     const a = cpu.registers.a.getUint();
     const value = register.getUint();
     const delta = a - value;
@@ -13,7 +13,7 @@ function sub(cpu: CPU, register: Pointer8, clockCycles = 1): InstructionExecuteO
     cpu.flags.h.setValue((a & 0xF) < (value & 0xF));
     cpu.flags.c.setValue(a < value);
 
-    return { clockCycles };
+    return { machineCycles };
 }
 
 const subCodes: Instruction[] = [
