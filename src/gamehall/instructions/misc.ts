@@ -58,8 +58,9 @@ const miscCodes: Instruction[] = [
         comment: 'Flips all bits of register a',
         code: 0x2F,
         execute: (cpu: CPU) => {
-            // TODO: Does setUint8(negative number) do it goodly?
             cpu.registers.a.setUint(~cpu.registers.a.getUint());
+            cpu.flags.c.set();
+            cpu.flags.h.set();
             return { machineCycles: 1 };
         }
     },
