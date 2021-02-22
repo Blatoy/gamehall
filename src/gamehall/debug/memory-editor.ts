@@ -68,6 +68,7 @@ export class MemoryEditor {
     constructor(private cpu: CPU, debug: Debug) {
         this.cpu.preExecuteHooks.push((_, offset) => {
             if (!debug.clockPaused && this.breakpoints.includes(offset) && !this.skipNextBreakpoint) {
+                FOLLOW_PC.checked = true;
                 debug.clockPaused = true;
                 this.skipNextBreakpoint = true;
                 return true;
