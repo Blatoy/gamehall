@@ -77,6 +77,8 @@ export class CPU {
 
     /** IME flag. */
     interruptMasterEnableFlag = false;
+    scheduledInterruptMasterEnableFlag = false;
+    setInterruptMasterEnableFlagAfterNextInstruction = false;
 
     /** Returns true to break execution, false to continue as normal. */
     preExecuteHooks: InstructionPreExecuteHook[] = [];
@@ -167,6 +169,18 @@ export class CPU {
             }
 
             const result = instruction.execute(this);
+
+            // TODO: Nicer implementation ?
+            if (this.scheduledInterruptMasterEnableFlag) {
+                this.scheduledInterruptMasterEnableFlag = false;
+                this.interruptMasterEnableFlag = true;
+            }
+
+            if (this.setInterruptMasterEnableFlagAfterNextInstruction) {
+                this.setInterruptMasterEnableFlagAfterNextInstruction = false;
+                this.scheduledInterruptMasterEnableFlag = true;
+            }
+
             executeHooks(this.postExecuteHooks, instruction.name, pcValue);
             return { instruction, result, elapsed: MACHINE_CYCLE_SPEED * result.machineCycles };
         } catch (err) {
