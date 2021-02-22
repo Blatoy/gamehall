@@ -144,11 +144,12 @@ export class GPU {
     draw(): void {
         const position = (this.scanX + this.scanY * this.frameImageData.width) * 4;
         const paletteIndex = this.getBgMapData1(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
+        const color = this.getPaletteColor(paletteIndex, Palette.Background);
 
-        this.frameImageData.data[position] = colors[paletteIndex * 4];
-        this.frameImageData.data[position + 1] = colors[paletteIndex * 4 + 1];
-        this.frameImageData.data[position + 2] = colors[paletteIndex * 4 + 2];
-        this.frameImageData.data[position + 3] = colors[paletteIndex * 4 + 3];
+        this.frameImageData.data[position] = color[0];
+        this.frameImageData.data[position + 1] = color[1];
+        this.frameImageData.data[position + 2] = color[2];
+        this.frameImageData.data[position + 3] = color[3];
     }
 
     finishedFrame(): void {
@@ -287,16 +288,60 @@ export class GPU {
     getBgMapData1(px: number, py: number): number {
         return this.getTileData(px, py, 0, 0);
     }
+
+    getPaletteColor(value: number, paletteData: Palette): Uint8ClampedArray {
+        let address: number;
+        switch (paletteData) {
+            case Palette.Background:
+                address = 0xFF47;
+                break;
+            case Palette.Object0:
+                address = 0xFF48;
+                break;
+            case Palette.Object1:
+                address = 0xFF49;
+                break;
+        }
+        const palette = this.memory.uint8Array[address];
+
+        let colorIndex: number;
+        switch (value) {
+            case 0:
+                colorIndex = palette & 0b0000_0011;
+                break;
+            case 1:
+                colorIndex = (palette & 0b0000_1100) >> 2;
+                break;
+            case 2:
+                colorIndex = (palette & 0b0011_0000) >> 4;
+                break;
+            case 3:
+                colorIndex = (palette & 0b1100_0000) >> 6;
+                break;
+            default:
+                throw new Error('Invalid color index specified.');
+        }
+
+        return colors.slice(colorIndex * 4, colorIndex * 4 + 4);
+    }
 }
 
+enum Palette {
+    Background,
+    Object0,
+    Object1
+}
+
+type Color = [number, number, number, number];
+
 const colors = makeColors(
-    [155, 188, 15, 255], // nintendo bg
-    [48, 98, 48, 255],   // ???
-    [15, 56, 15, 255],   // nintendo text
-    [139, 172, 15, 255], // ???
+    [155, 188, 15, 255],
+    [139, 172, 15, 255],
+    [48, 98, 48, 255],
+    [15, 56, 15, 255],
 );
 
-function makeColors(...colors: [number, number, number, number][]) {
+function makeColors(...colors: Color[]) {
     const length = colors.length * 4 /* rgba */;
     const buffer = new ArrayBuffer(length);
     const array = new Uint8ClampedArray(buffer);
