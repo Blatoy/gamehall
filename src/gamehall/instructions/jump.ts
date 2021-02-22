@@ -18,8 +18,6 @@ const jumpAbsoluteCodes: Instruction[] = [
         code: 0xC3,
         name: 'JP a16',
         execute: (cpu: CPU) => {
-            // TODO: Endianness for all a16 jumps - The second byte of the object code (immediately following the opcode) corresponds to the
-            // lower-order byte of a16 (bits 0-7), and the third byte of the object code corresponds to the higher-order byte (bits 8-15).
             cpu.jump(cpu.next16().getUint());
             return { machineCycles: 4 };
         }
@@ -64,7 +62,6 @@ const jumpAbsoluteCodes: Instruction[] = [
         code: 0xE9,
         name: 'JP (hl)',
         execute: (cpu: CPU) => {
-            // TODO: Endianness ;)
             cpu.jump(cpu.pointerHL16().getUint());
             return { machineCycles: 1 };
         }

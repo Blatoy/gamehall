@@ -380,7 +380,6 @@ const load8Codes: Instruction[] = [
 ];
 
 const load16Codes: Instruction[] = [
-    // TODO: Verify endianness: The first byte of immediate data is the lower byte (i.e., bits 0-7), and the second byte of immediate data is the higher byte (i.e., bits 8-15).
     {
         code: 0x01,
         name: 'LD bc,d16',
@@ -489,7 +488,6 @@ const miscLoadCodes: Instruction[] = [
         execute: (cpu: CPU) => load(cpu, cpu.registers.a, cpu.pointer8(cpu.registers.de.getUint()), 2)
     },
     // Increment/Decrement load
-    // TODO: Does the inc/dec happen before or after storing? Also verify endianness
     {
         code: 0x22,
         name: 'LD (hl+),a',
