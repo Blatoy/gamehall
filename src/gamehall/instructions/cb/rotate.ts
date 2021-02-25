@@ -8,10 +8,10 @@ function rl(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecute
     const carry = cpu.flags.c.get();
     const value = register.getUint();
     cpu.flags.reset();
-    cpu.flags.z.compute(value);
     cpu.flags.c.setValue(getBit(value, 7));
     register.setUint(((value & 0b0111_1111) << 1) | (carry ? 0b0000_0001 : 0));
-
+    cpu.flags.z.compute(register.getUint());
+    
     return { machineCycles };
 }
 
@@ -20,9 +20,9 @@ function rr(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecute
     const carry = cpu.flags.c.get();
     const value = register.getUint();
     cpu.flags.reset();
-    cpu.flags.z.compute(value);
     cpu.flags.c.setValue(getBit(value, 0));
     register.setUint(((value & 0b1111_1110) >> 1) | (carry ? 0b1000_0000 : 0));
+    cpu.flags.z.compute(register.getUint());
 
     return { machineCycles };
 }
