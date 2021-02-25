@@ -10,6 +10,10 @@ const H_LINE_CYCLES = 114;
 const H_LINE_DRAWING_AND_BLANK_CYCLES = H_LINE_CYCLES - SEARCHING_OAM_CYCLES;
 const V_BLANK_CYCLES = 10 * H_LINE_CYCLES;
 
+const TILE_X_COUNT = 32;
+const TILE_WIDTH = 8;
+const TILE_HEIGHT = 8;
+
 enum GPUMode {
     HBlank,
     VBlank,
@@ -176,15 +180,11 @@ export class GPU {
         return true;
     }
 
-    /**
-     * Returns palette index for given pixel coordinate into tile data.
-     * @param bgMap BGMap 0 is $9800-9BFF
-     * BGMap 1 is $9C00-9FFF
-     * @param block Block 0 is $8000-87FF
-     * Block 1 is $8800-8FFF
-     * Block 2 is $9000-97FF
-     */
-    getTileData(px: number, py: number, bgMap: number, block: number): number {
+    getTileIndex(px: number, py: number, bgMap: number): number {
+        px = px % 256;
+        py = py % 256;
+
+        // 1: px, py to tile index
         let bgMapAddress: number;
         switch (bgMap) {
             case 0:
@@ -197,6 +197,20 @@ export class GPU {
                 throw new Error('Unknown bgMap ' + bgMap);
         }
 
+        const tx = Math.floor(px / TILE_WIDTH);
+        const ty = Math.floor(py / TILE_HEIGHT);
+        return this.memory.uint8Array[bgMapAddress + tx + ty * TILE_X_COUNT];
+    }
+
+    /**
+     * Returns palette index for given pixel coordinate (either relative to screen or to tile) into tile data.
+     * @param bgMap BGMap 0 is $9800-9BFF
+     * BGMap 1 is $9C00-9FFF
+     * @param block Block 0 is $8000-87FF
+     * Block 1 is $8800-8FFF
+     * Block 2 is $9000-97FF
+     */
+    getTileData(tileIndex: number, rx: number, ry: number, block: number): number {
         let blockAddress: number;
         switch (block) {
             case 0:
@@ -235,36 +249,11 @@ export class GPU {
         1px byte 524 byte 525
         1px byte 526 byte 527
 
-        tile data: ^^^^
-
-                TILE BG MAP
-        [0, 0, 0, 0, 0, 1, 0, 0... 256 more]
-
-        === tetris ===
-        tilemap: [0, 2, 3, ...] x 256
-
-        ----------
-        px, py => tilemap index
-        retrieve the tile from 
-
         */
 
-        px = px % 256;
-        py = py % 256;
-
-        // 1: px, py to tile index
-        const TILE_X_COUNT = 32;
-        const TILE_Y_COUNT = 32;
-        const TILE_WIDTH = 8;
-        const TILE_HEIGHT = 8;
-
-        const tx = Math.floor(px / TILE_WIDTH);
-        const ty = Math.floor(py / TILE_HEIGHT);
-        const tileIndex = this.memory.uint8Array[bgMapAddress + tx + ty * TILE_X_COUNT];
-
-        // 2: px, py to byte offset (in the tile)
-        const rx = px % TILE_WIDTH;
-        const ry = py % TILE_HEIGHT;
+        // 2: rx, ry to byte offset (in the tile)
+        rx = rx % TILE_WIDTH;
+        ry = ry % TILE_HEIGHT;
         const byteOffset = ry * 2;
 
         // 3: Retrieve bit pair at the correct index
@@ -286,7 +275,7 @@ export class GPU {
     }
 
     getBgMapData1(px: number, py: number): number {
-        return this.getTileData(px, py, 0, 0);
+        return this.getTileData(this.getTileIndex(px, py, 0), px, py, 0);
     }
 
     getPaletteColor(value: number, paletteData: Palette): Uint8ClampedArray {
@@ -326,7 +315,7 @@ export class GPU {
     }
 }
 
-enum Palette {
+export enum Palette {
     Background,
     Object0,
     Object1
