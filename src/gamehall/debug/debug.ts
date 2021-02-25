@@ -11,6 +11,7 @@ import { updateMemoryViewCanvas } from "./memory-view.js";
 import { updateFlags, updateRegisters } from "./registers.js";
 import { Speed } from "./speed.js";
 import { updateStack } from "./stack.js";
+import { updateTileViewCanvas } from './tile-view.js';
 
 const CYCLE_DISPLAY_BUTTON = document.getElementById("cycle-binary-view") as HTMLButtonElement;
 const STEP_BUTTON = document.getElementById("step") as HTMLButtonElement;
@@ -117,6 +118,7 @@ export class Debug {
         updateFlags(this.cpu);
         updateStack(this.cpu, this.activeDisplayType);
         updateMemoryViewCanvas(this.cpu);
+        updateTileViewCanvas(this.cpu, this.gpu);
 
         this.lastInstructions.updateDOMTable();
         this.memoryEditor.updateMemoryTable();
