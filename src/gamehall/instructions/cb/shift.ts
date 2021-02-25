@@ -27,6 +27,17 @@ function shiftRight(cpu: CPU, register: Pointer8, machineCycles = 2): Instructio
     return { machineCycles };
 }
 
+/** Shift right (reset bit 0) */
+function shiftRightReset(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecuteOutput {
+    const value = register.getUint();
+    cpu.flags.reset();
+    cpu.flags.c.setValue(getBit(value, 0));
+    register.setUint(value >> 1);
+    cpu.flags.z.compute(register.getUint());
+
+    return { machineCycles };
+}
+
 export default [
     {
         code: 0x20,
@@ -113,41 +124,41 @@ export default [
     {
         code: 0x38,
         name: 'SRL b',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.registers.b)
     },
     {
         code: 0x39,
         name: 'SRL c',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.registers.c)
     },
     {
         code: 0x3A,
         name: 'SRL d',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.registers.d)
     },
     {
         code: 0x3B,
         name: 'SRL e',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.registers.e)
     },
     {
         code: 0x3C,
         name: 'SRL h',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.registers.h)
     },
     {
         code: 0x3D,
         name: 'SRL l',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.registers.l)
     },
     {
         code: 0x3E,
         name: 'SRL (hl)',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.pointerHL8(), 4)
     },
     {
         code: 0x3F,
         name: 'SRL a',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRightReset(cpu, cpu.registers.a)
     }
 ] as InstructionDefinition[];
