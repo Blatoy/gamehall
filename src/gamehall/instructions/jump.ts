@@ -60,7 +60,7 @@ const jumpAbsoluteCodes: Instruction[] = [
     },
     {
         code: 0xE9,
-        name: 'JP (hl)',
+        name: 'JP hl',
         execute: (cpu: CPU) => {
             cpu.jump(cpu.registers.hl.getUint());
             return { machineCycles: 1 };
