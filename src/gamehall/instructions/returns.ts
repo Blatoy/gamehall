@@ -6,8 +6,8 @@ const returnCodes: Instruction[] = [
         code: 0xC0,
         name: 'RET nz',
         execute: (cpu: CPU) => {
-            const retAddr = cpu.stackPop16();
             if (cpu.flags.z.get() === false) {
+                const retAddr = cpu.stackPop16();
                 cpu.jump(retAddr.getUint());
                 return { machineCycles: 5 };
             }
@@ -18,8 +18,8 @@ const returnCodes: Instruction[] = [
         code: 0xC8,
         name: 'RET z',
         execute: (cpu: CPU) => {
-            const retAddr = cpu.stackPop16();
             if (cpu.flags.z.get() === true) {
+                const retAddr = cpu.stackPop16();
                 cpu.jump(retAddr.getUint());
                 return { machineCycles: 5 };
             }
@@ -39,8 +39,8 @@ const returnCodes: Instruction[] = [
         code: 0xD0,
         name: 'RET nc',
         execute: (cpu: CPU) => {
-            const retAddr = cpu.stackPop16();
             if (cpu.flags.c.get() === false) {
+                const retAddr = cpu.stackPop16();
                 cpu.jump(retAddr.getUint());
                 return { machineCycles: 5 };
             }
@@ -51,8 +51,8 @@ const returnCodes: Instruction[] = [
         code: 0xD8,
         name: 'RET c',
         execute: (cpu: CPU) => {
-            const retAddr = cpu.stackPop16();
             if (cpu.flags.c.get() === true) {
+                const retAddr = cpu.stackPop16();
                 cpu.jump(retAddr.getUint());
                 return { machineCycles: 5 };
             }
