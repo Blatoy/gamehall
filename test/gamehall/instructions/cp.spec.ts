@@ -42,4 +42,29 @@ describe('CP', () => {
         });
     }
 
+
+    it('d8', () => {
+        cpu.resetRegisters({ a: 0b0000_0010 });
+        cpu.testInstruction('CP d8', 0b0000_0010);
+        cpu.expect8BitRegisters({ f: {z: 1, n: 1} });
+    });
+
+    it('d8 carry', () => {
+        cpu.resetRegisters({ a: 0b0010_0000 });
+        cpu.testInstruction('CP d8', 0b0001_0000);
+        cpu.expect8BitRegisters({ f: {z: 0, n: 1, c: 0} });
+    });
+
+    it('d8 carry set', () => {
+        cpu.resetRegisters({ a: 0b0010_0000 });
+        cpu.testInstruction('CP d8', 0b0100_0000);
+        cpu.expect8BitRegisters({ f: {z: 0, n: 1, c: 1} });
+    });
+
+    it('d8 half carry and carry set', () => {
+        cpu.resetRegisters({ a: 0b0000_1000 });
+        cpu.testInstruction('CP d8', 0b0000_1100);
+        cpu.expect8BitRegisters({ f: {z: 0, n: 1, c: 1, h: 1} });
+    });
+
 });
