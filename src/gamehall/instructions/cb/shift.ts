@@ -14,6 +14,19 @@ function shiftLeftReset(cpu: CPU, register: Pointer8, machineCycles = 2): Instru
     return { machineCycles };
 }
 
+/** Shift right (keep bit 0) */
+function shiftRight(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecuteOutput {
+    const value = register.getUint();
+    const bit7 = getBit(value, 7) ? 1 : 0;
+
+    cpu.flags.reset();
+    cpu.flags.c.setValue(getBit(value, 0));
+    register.setUint((value >> 1) | (bit7 * 0b1000_0000));
+    cpu.flags.z.compute(register.getUint());
+
+    return { machineCycles };
+}
+
 export default [
     {
         code: 0x20,
@@ -53,48 +66,48 @@ export default [
     {
         code: 0x27,
         name: 'SLA a',
-        execute: (cpu: CPU) => shiftLeft(cpu, cpu.registers.a)
+        execute: (cpu: CPU) => shiftLeftReset(cpu, cpu.registers.a)
     },
     /** Shift right (keep bit 0*/
     {
         code: 0x28,
         name: 'SRA b',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRight(cpu, cpu.registers.b)
     },
     {
         code: 0x29,
         name: 'SRA c',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRight(cpu, cpu.registers.c)
     },
     {
         code: 0x2A,
         name: 'SRA d',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRight(cpu, cpu.registers.d)
     },
     {
         code: 0x2B,
         name: 'SRA e',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRight(cpu, cpu.registers.e)
     },
     {
         code: 0x2C,
         name: 'SRA h',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRight(cpu, cpu.registers.h)
     },
     {
         code: 0x2D,
         name: 'SRA l',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRight(cpu, cpu.registers.l)
     },
     {
         code: 0x2E,
         name: 'SRA (hl)',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) =>shiftRight(cpu, cpu.pointerHL8(), 4)
     },
     {
         code: 0x2F,
         name: 'SRA a',
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => shiftRight(cpu, cpu.registers.a)
     },
     /** Shift Right (reset bit 0) */
     {
