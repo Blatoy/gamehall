@@ -184,9 +184,12 @@ td {
         align-items: center;
 
         input {
-            width: 3.5em;
             margin-left: 0.8em;
             margin-right: 0.8em;
+        }
+
+        input[type=text] {
+            width: 3.5em;
         }
     }
 }
@@ -225,6 +228,15 @@ td {
 .clickable:hover {
     text-decoration: underline;
     cursor: pointer;
+}
+
+
+.screen-container {
+    text-align: center;
+}
+
+.memory-detail {
+    text-align: right;
 }
 
 #instruction-at-pc {

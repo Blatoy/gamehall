@@ -11,4 +11,12 @@
     &.bottom {
         flex: 0.85;
     }
+
+    &.top>div {
+        width: 100%;
+    }
+
+    canvas {
+        height: 100%;
+    }
 }

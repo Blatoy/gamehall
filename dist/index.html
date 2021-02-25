@@ -41,36 +41,26 @@
 
     <!-- Top row -->
     <div class="row top">
-        <!-- Memory view -->
-        <canvas id="memory-view" width="256" height="256"></canvas>
 
-        <!-- Screen -->
-        <canvas id="game-screen" width="160" height="144"></canvas>
-
-        <div class="titled-container">
-            <span class="title">Flags / Registers</span>
-            <table>
-                <tr><th>Zero</th><th>Negative</th><th>Half</th><th>Carry</th></tr>
-                <tr><td id="flag-z" class="flag-disabled">0</td><td id="flag-n" class="flag-disabled">0</td><td id="flag-h" class="flag-disabled">0</td><td id="flag-c" class="flag-disabled">0</td></tr>
-            </table>
-            <table>
-                <tr><th>PC</th><td id="register-pc">0000 0000 0000 0000</td></tr>
-                <tr><th>SP</th><td id="register-sp">0000 0000 0000 0000</td></tr>
-                <tr><th>H</th><td id="register-h">0000 0000</td></tr>
-                <tr><th>L</th><td id="register-l">0000 0000</td></tr>
-                <tr><th>A</th><td id="register-a">0000 0000</td></tr>
-                <tr><th>F</th><td id="register-f">0000 0000</td></tr>
-                <tr><th>D</th><td id="register-d">0000 0000</td></tr>
-                <tr><th>E</th><td id="register-e">0000 0000</td></tr>
-                <tr><th>B</th><td id="register-b">0000 0000</td></tr>
-                <tr><th>C</th><td id="register-c">0000 0000</td></tr>
-            </table>
+        <div>
+            <!-- Memory view -->
+            <canvas id="memory-view" width="256" height="256"></canvas>
         </div>
+
+        <div class="screen-container">
+            <!-- Screen -->
+            <canvas id="game-screen" width="160" height="144"></canvas>
+        </div>
+        
+        <div class="memory-detail">
+            <canvas id="memory-detail" width="256" height="256"></canvas>
+        </div>
+
     </div>
 
     <!-- Bottom row -->
     <div class="row bottom">
-        <div class="titled-container flex-35">
+        <div class="titled-container flex-40">
             <span class="title">Memory editor</span>
             <div class="monospace scrollable-table">
                 <div class="memory-editor-options">
@@ -111,6 +101,25 @@
                     <canvas id="memory-table-scrollbar" width="8" height="256"></canvas>
                 </div>
             </div>
+        </div>
+        <div class="titled-container flex-15">
+            <span class="title">Flags / Registers</span>
+            <table>
+                <tr><th>Zero</th><th>Negative</th><th>Half</th><th>Carry</th></tr>
+                <tr><td id="flag-z" class="flag-disabled">0</td><td id="flag-n" class="flag-disabled">0</td><td id="flag-h" class="flag-disabled">0</td><td id="flag-c" class="flag-disabled">0</td></tr>
+            </table>
+            <table>
+                <tr><th>PC</th><td id="register-pc">0000 0000 0000 0000</td></tr>
+                <tr><th>SP</th><td id="register-sp">0000 0000 0000 0000</td></tr>
+                <tr><th>H</th><td id="register-h">0000 0000</td></tr>
+                <tr><th>L</th><td id="register-l">0000 0000</td></tr>
+                <tr><th>A</th><td id="register-a">0000 0000</td></tr>
+                <tr><th>F</th><td id="register-f">0000 0000</td></tr>
+                <tr><th>D</th><td id="register-d">0000 0000</td></tr>
+                <tr><th>E</th><td id="register-e">0000 0000</td></tr>
+                <tr><th>B</th><td id="register-b">0000 0000</td></tr>
+                <tr><th>C</th><td id="register-c">0000 0000</td></tr>
+            </table>
         </div>
         <div class="titled-container flex-20">
             <span class="title">Last instructions</span>
