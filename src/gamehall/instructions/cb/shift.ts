@@ -9,7 +9,7 @@ function shiftLeftReset(cpu: CPU, register: Pointer8, machineCycles = 2): Instru
     cpu.flags.reset();
     cpu.flags.c.setValue(getBit(value, 7));
     register.setUint((value & 0b0111_1111) << 1);
-    cpu.flags.z.compute(register.getUint());
+    cpu.flags.z.compute(register);
 
     return { machineCycles };
 }
@@ -22,7 +22,7 @@ function shiftRight(cpu: CPU, register: Pointer8, machineCycles = 2): Instructio
     cpu.flags.reset();
     cpu.flags.c.setValue(getBit(value, 0));
     register.setUint((value >> 1) | (bit7 * 0b1000_0000));
-    cpu.flags.z.compute(register.getUint());
+    cpu.flags.z.compute(register);
 
     return { machineCycles };
 }
@@ -33,7 +33,7 @@ function shiftRightReset(cpu: CPU, register: Pointer8, machineCycles = 2): Instr
     cpu.flags.reset();
     cpu.flags.c.setValue(getBit(value, 0));
     register.setUint(value >> 1);
-    cpu.flags.z.compute(register.getUint());
+    cpu.flags.z.compute(register);
 
     return { machineCycles };
 }

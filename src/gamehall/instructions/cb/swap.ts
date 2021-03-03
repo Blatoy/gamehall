@@ -6,7 +6,7 @@ function swap(cpu: CPU, value: Pointer8, machineCycles = 2): InstructionExecuteO
     const high = 0b1111_0000 & value.getUint();
     value.setUint((value.getUint() << 4) | (high >> 4));
     cpu.flags.reset();
-    cpu.flags.z.setValue(value.getUint() === 0);
+    cpu.flags.z.compute(value);
 
     return { machineCycles };
 }

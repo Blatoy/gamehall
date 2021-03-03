@@ -94,9 +94,8 @@ export class GPU {
                     }
 
                     if (this.memoryScanY <= 153) {
+                        // TODO: Check if this check is an issue
                         this.memoryScanY++;
-                        console.log("Timing is wrong");
-                        // debugger;
                     }
 
                     this.modeTime -= vblankStep;

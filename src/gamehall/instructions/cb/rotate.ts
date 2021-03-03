@@ -7,10 +7,11 @@ import { Pointer8 } from "../../pointer.js";
 function rl(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecuteOutput {
     const carry = cpu.flags.c.get();
     const value = register.getUint();
+
     cpu.flags.reset();
     cpu.flags.c.setValue(getBit(value, 7));
     register.setUint(((value & 0b0111_1111) << 1) | (carry ? 0b0000_0001 : 0));
-    cpu.flags.z.compute(register.getUint());
+    cpu.flags.z.compute(register);
     
     return { machineCycles };
 }
@@ -19,10 +20,11 @@ function rl(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecute
 function rr(cpu: CPU, register: Pointer8, machineCycles = 2): InstructionExecuteOutput {
     const carry = cpu.flags.c.get();
     const value = register.getUint();
+
     cpu.flags.reset();
     cpu.flags.c.setValue(getBit(value, 0));
-    register.setUint(((value & 0b1111_1110) >> 1) | (carry ? 0b1000_0000 : 0));
-    cpu.flags.z.compute(register.getUint());
+    register.setUint((value >> 1) | (carry ? 0b1000_0000 : 0));
+    cpu.flags.z.compute(register);
 
     return { machineCycles };
 }
