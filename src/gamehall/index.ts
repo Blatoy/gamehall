@@ -6,6 +6,7 @@ import { addDocumentListener } from "./hotkeys.js";
 import { Memory } from "./memory.js";
 import { Cartridge } from "./cartridge.js";
 import { Screen } from './screen.js';
+import { Controller } from "./controller.js";
 
 async function main() {
     const memory = new Memory();
@@ -23,11 +24,13 @@ async function main() {
     const gpu = new GPU(memory);
     const clock = new Clock(cpu, gpu);
     const screen = new Screen(document.getElementById("game-screen") as HTMLCanvasElement);
+    const controller = new Controller(memory);
     const debug = new Debug(cpu, gpu, screen, clock);
 
     gpu.renderedFrameHooks.push((imgData) => screen.renderFrame(imgData));
 
     debug.addHotkeyListener();
+    controller.addHotkeyListener();
     addDocumentListener();
 
     let tickCount = 0;

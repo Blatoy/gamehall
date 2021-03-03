@@ -1,6 +1,7 @@
 interface Hotkey {
     name: string;
     keys: Shortcut[];
+    triggerOnRelease?: boolean;
 }
 
 interface Shortcut {
@@ -46,10 +47,50 @@ const HOTKEYS: Hotkey[] = [
         keys: [
             { key: 'NumpadDecimal' }
         ]
+    },
+    {
+        name: 'controller-a',
+        triggerOnRelease: true,
+        keys: [{ key: 'KeyW' }]
+    },
+    {
+        name: 'controller-b',
+        triggerOnRelease: true,
+        keys: [{ key: 'KeyD' }]
+    },
+    {
+        name: 'controller-start',
+        triggerOnRelease: true,
+        keys: [{ key: 'KeyS' }]
+    },
+    {
+        name: 'controller-select',
+        triggerOnRelease: true,
+        keys: [{ key: 'KeyA' }]
+    },
+    {
+        name: 'controller-up',
+        triggerOnRelease: true,
+        keys: [{ key: 'ArrowUp' }]
+    },
+    {
+        name: 'controller-down',
+        triggerOnRelease: true,
+        keys: [{ key: 'ArrowDown' }]
+    },
+    {
+        name: 'controller-left',
+        triggerOnRelease: true,
+        keys: [{ key: 'ArrowLeft' }]
+    },
+    {
+        name: 'controller-right',
+        triggerOnRelease: true,
+        keys: [{ key: 'ArrowRight' }]
     }
 ];
 
-export const hotkeyListeners: ((hotkeyName: string) => void)[] = [];
+export const hotkeyListeners: ((hotkeyName: string, released: boolean) => void)[] = [];
 
 export function addDocumentListener(): void {
     document.addEventListener('keydown', (ev) => {
@@ -59,11 +100,23 @@ export function addDocumentListener(): void {
             (k.alt || false) === ev.altKey &&
             k.key === ev.code
         ));
-    
+
         if (hotkey) {
             for (const listener of hotkeyListeners) {
-                listener(hotkey.name);
+                listener(hotkey.name, false);
             }
+            ev.preventDefault();
+        }
+    });
+
+    document.addEventListener('keyup', (ev) => {
+        const hotkey = HOTKEYS.find(h => h.keys.find(k => k.key === ev.code));
+
+        if (hotkey && hotkey.triggerOnRelease) {
+            for (const listener of hotkeyListeners) {
+                listener(hotkey.name, true);
+            }
+            ev.preventDefault();
         }
     });
 }
