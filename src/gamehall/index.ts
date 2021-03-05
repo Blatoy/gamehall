@@ -4,9 +4,9 @@ import { Debug } from "./debug/debug.js";
 import { GPU } from "./gpu.js";
 import { addDocumentListener } from "./hotkeys.js";
 import { Memory } from "./memory.js";
-import { CartridgeController } from "./cartridge.js";
 import { Screen } from './screen.js';
 import { Controller } from "./controller.js";
+import { CartridgeController } from "./cartridge-controller.js";
 
 async function main() {
     const memory = new Memory();

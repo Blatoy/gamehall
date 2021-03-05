@@ -1,4 +1,5 @@
-import { SWITCHABLE_BANK_END, Cartridge, CartridgeController, CartridgeType } from '../cartridge.js';
+import { CartridgeController } from '../cartridge-controller.js';
+import { SWITCHABLE_BANK_END, Cartridge, CartridgeType } from '../cartridge.js';
 
 class ROMOnly implements Cartridge {
     constructor(private controller: CartridgeController) { }
