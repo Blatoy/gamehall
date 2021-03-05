@@ -1,71 +1,130 @@
+import { BinchHook } from "../binch/binch.js";
 import { Memory } from "./memory.js";
 import { toHex } from "./utils.js";
+import CartridgeTypeList from './cartridge-types/index.js';
 
 export type ROMName = `${string}.gb`;
 
-export class Cartridge {
-    private arrayBuffer?: ArrayBuffer;
-    private uint8Array?: Uint8Array;
+export const ROM_START = 0x0000;
+export const SWITCHABLE_BANK_START = 0x4000;
+export const SWITCHABLE_BANK_END = 0x7FFF;
+export const RAM_START = 0xA000;
+export const RAM_END = 0xBFFF;
+export const RAM_SIZE = 1 + RAM_END - RAM_START;
 
-    constructor(public name: ROMName, private memory: Memory) {
+
+export class CartridgeController {
+    protected readonly cartridgeTypes: (CartridgeType | null)[];
+    gameROM?: CartridgeData;
+    bootROM?: CartridgeData;
+    cartridge?: Cartridge;
+
+    constructor(public memory: Memory) {
+        this.cartridgeTypes = new Array(256).fill(null);
+        for (const cartridgeType of CartridgeTypeList) {
+            this.cartridgeTypes[cartridgeType.code] = cartridgeType;
+        }
+    }
+    
+    protected get cartridgeCode(): number | undefined {
+        return this.gameROM?.uint8Array[0x0147];
     }
 
-    get romType(): ROMType {
-        return this.uint8Array?.[0x0147] ?? ROMType.Invalid;
-    }
-
-    async downloadData(): Promise<void> {
-        const result = await fetch('./roms/' + this.name);
+    static async downloadData(name: ROMName): Promise<CartridgeData> {
+        const result = await fetch('./roms/' + name);
         if (!result.ok) {
-            throw new Error('ROM ' + this.name + ' could not be loaded.');
+            throw new Error('ROM ' + name + ' could not be loaded.');
         }
-        this.arrayBuffer = await result.arrayBuffer();
-        this.uint8Array = new Uint8Array(this.arrayBuffer);
+
+        const arrayBuffer = await result.arrayBuffer();
+        return {
+            arrayBuffer,
+            uint8Array: new Uint8Array(arrayBuffer)
+        };
     }
 
-    load() {
-        switch (this.romType) {
-            case ROMType.RomOnly:
-                // Load banks 0 and 1
-                this.loadIntoMemory(0, 0, 0x8000);
-                break;
-            default:
-                throw new Error('ROM type ' + toHex(this.romType) + ' - ' + ROMType[this.romType] + ' is not implemented.');
-        }
+    async initialize(bootROM: ROMName, gameROM: ROMName): Promise<void> {
+        const bootData = CartridgeController.downloadData(bootROM).then(data => this.bootROM = data);
+        const gameData = CartridgeController.downloadData(gameROM).then(data => this.gameROM = data);
+        await Promise.all([bootData, gameData]);
+    
+        // Load cartridge (including default banks of gameROM)
+        this.loadCartridge();
+    
+        // Override beginning with bootROM
+        this.loadIntoMemory(0, 0, undefined, 'boot');
+    
+        this.initHooks();
     }
 
-    loadIntoMemory(sourceOffset: number, targetOffset: number, end?: number) {
-        if (this.uint8Array === undefined) {
-            throw new Error('Not loaded yet.');
+    loadCartridge(): void {
+        if (this.cartridgeCode === undefined) {
+            throw new Error('No ROM loaded, can not load cartridge.');
         }
-        this.memory.write(targetOffset, this.uint8Array.slice(sourceOffset, end));
+
+        const cartridgeType = this.cartridgeTypes[this.cartridgeCode];
+        if (cartridgeType === null) {
+            throw new Error('Unknown cartridge type: ' + toHex(this.cartridgeCode));
+        }
+
+        this.cartridge = new cartridgeType(this);
+        this.cartridge.load();
     }
 
-    switchBank(bank: number) {
-        switch (this.romType) {
-            case ROMType.RomOnly:
-                // Bank switching can't be done for this type
-                console.warn('ROM type does not support bank switching.');
-                break;
-            default:
-                throw new Error('ROM type ' + toHex(this.romType) + ' - ' + ROMType[this.romType] + ' is not implemented.');
+    initHooks(): void {
+        if (this.cartridge === undefined) {
+            throw new Error('No cartridge loaded, can not init memory hooks.');
         }
-    }
 
-    static initHooks(memory: Memory, gameROM: Cartridge): void {
-        memory.data.hooks.push((byteOffset, length, value) => {
+        // TODO: Remove old hook
+        this.memory.data.hooks.push((byteOffset, length, value, littleEndian) => {
             // TODO: Writing 16 bit values is broken for this
             if (byteOffset === 0xFF50 && value !== 0) {
                 // Turn off boot rom
-                gameROM.loadIntoMemory(0, 0, 0x100);
+                this.loadIntoMemory(0, 0, 0x100);
                 return false;
+            } else if (this.cartridge!.onMemoryWrite !== undefined) {
+                // Run the cartridge's memory hook
+                return this.cartridge!.onMemoryWrite(byteOffset, length, value, littleEndian);
             }
             return true;
         });
     }
+
+    /**
+     * @param sourceEnd Inclusive
+     */
+    loadIntoMemory(sourceOffset: number, targetOffset: number, sourceEnd?: number, dataSource: 'game' | 'boot' = 'game') {
+        const uint8Array = dataSource === 'boot' ? this.bootROM?.uint8Array : this.gameROM?.uint8Array;
+        if (uint8Array === undefined) {
+            throw new Error('ROM is not loaded yet.');
+        }
+
+        if (sourceEnd !== undefined) {
+            // Inclusive
+            sourceEnd++;
+        }
+
+        this.memory.write(targetOffset, uint8Array.slice(sourceOffset, sourceEnd));
+    }
 }
 
-export enum ROMType {
+export interface CartridgeData {
+    arrayBuffer: ArrayBuffer;
+    uint8Array: Uint8Array;
+}
+
+export interface Cartridge {
+    load(): void;
+    onMemoryWrite?: BinchHook;
+}
+export type CartridgeType = {
+    code: number;
+    new(controller: CartridgeController): Cartridge
+};
+
+/*
+export enum CartridgeType {
     Invalid = -1,
     RomOnly = 0x00,
     Mbc1 = 0x01,
@@ -96,3 +155,4 @@ export enum ROMType {
     Huc3 = 0xfe,
     Huc1RamBattery = 0xff
 }
+*/

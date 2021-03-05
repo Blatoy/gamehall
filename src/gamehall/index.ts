@@ -4,7 +4,7 @@ import { Debug } from "./debug/debug.js";
 import { GPU } from "./gpu.js";
 import { addDocumentListener } from "./hotkeys.js";
 import { Memory } from "./memory.js";
-import { Cartridge } from "./cartridge.js";
+import { CartridgeController } from "./cartridge.js";
 import { Screen } from './screen.js';
 import { Controller } from "./controller.js";
 
@@ -12,13 +12,8 @@ async function main() {
     const memory = new Memory();
     memory.init();
 
-    const gameROM = new Cartridge('tetris.gb', memory);
-    const bootROM = new Cartridge('boot-rom.gb', memory);
-    await Promise.all([gameROM.downloadData(), bootROM.downloadData()]);
-    gameROM.load();
-    bootROM.loadIntoMemory(0, 0);
-
-    Cartridge.initHooks(memory, gameROM);
+    const cartridgeController = new CartridgeController(memory);
+    await cartridgeController.initialize('boot-rom.gb', 'tetris.gb');
 
     const cpu = new CPU(memory);
     const gpu = new GPU(memory);

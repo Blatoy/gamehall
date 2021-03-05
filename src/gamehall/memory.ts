@@ -29,6 +29,11 @@ export class Memory {
     readonly data = new Binch(this.arrayBuffer);
 
     init(): void {
+        // Start out cleared
+        for (let i = 0; i < 0x10000; i++) {
+            this.uint8Array[i] = 0;
+        }
+
         // RAM is random
         for (let i = 0xC000; i < 0xDFFF; i++) {
             this.uint8Array[i] = Math.floor(Math.random() * 255);
@@ -74,6 +79,14 @@ export class Memory {
      */
     write(byteOffset: number, value: ArrayLike<number>): void {
         this.uint8Array.set(value, byteOffset);
+    }
+
+    
+    writeUint8Array(uint8Array: Uint8Array, targetOffset: number = 0, sourceOffset: number = 0, size: number | undefined = undefined) {
+        if (size === undefined) {
+            size = uint8Array.byteLength;
+        }
+        this.write(targetOffset, uint8Array.slice(sourceOffset, sourceOffset + size));
     }
 }
 
