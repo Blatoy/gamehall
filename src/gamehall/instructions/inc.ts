@@ -8,7 +8,7 @@ function inc(cpu: CPU, register: Pointer8 | Pointer16, machineCycles = 1): Instr
     const newValue = oldValue + 1;
     register.setUint(newValue);
     if (register.byteSize === 1) {
-        cpu.flags.z.compute(newValue);
+        cpu.flags.z.compute(register);
         cpu.flags.n.clear();
         cpu.flags.h.setValue(((oldValue & 0xF) + 1) & 0x10);
     }
