@@ -1,7 +1,7 @@
 import { Cartridge, CartridgeType, ROMName } from "./cartridge.js";
-import { Memory } from "./memory.js";
 import CartridgeTypeList from './cartridge-types/index.js';
 import { toHex } from "./utils.js";
+import { CPU } from "./cpu.js";
 
 export interface CartridgeData {
     arrayBuffer: ArrayBuffer;
@@ -14,13 +14,13 @@ export class CartridgeController {
     bootROM?: CartridgeData;
     cartridge?: Cartridge;
 
-    constructor(public memory: Memory) {
+    constructor(public cpu: CPU) {
         this.cartridgeTypes = new Array(256).fill(null);
         for (const cartridgeType of CartridgeTypeList) {
             this.cartridgeTypes[cartridgeType.code] = cartridgeType;
         }
     }
-    
+
     protected get cartridgeCode(): number | undefined {
         return this.gameROM?.uint8Array[0x0147];
     }
@@ -38,7 +38,7 @@ export class CartridgeController {
         };
     }
 
-    async initialize(bootROM: ROMName, gameROM: ROMName): Promise<void> {
+    async initialize(bootROM: ROMName, gameROM: ROMName, skipBootROM = false): Promise<void> {
         const bootData = CartridgeController.downloadData(bootROM).then(data => this.bootROM = data);
         const gameData = CartridgeController.downloadData(gameROM).then(data => this.gameROM = data);
         await Promise.all([bootData, gameData]);
@@ -46,8 +46,18 @@ export class CartridgeController {
         // Load cartridge (including default banks of gameROM)
         this.loadCartridge();
     
-        // Override beginning with bootROM
-        this.loadIntoMemory(0, 0, undefined, 'boot');
+        if (skipBootROM) {
+            // TODO: Check if other initialization steps are required
+            this.cpu.registers.sp.setUint(0xfffe);
+            this.cpu.registers.pc.setUint(0x0100);
+            this.cpu.registers.hl.setUint(0x014d);
+            this.cpu.registers.af.setUint(0x01b0);
+            this.cpu.registers.de.setUint(0x00d8);
+            this.cpu.registers.bc.setUint(0x0013);
+        } else {
+            // Override beginning with bootROM
+            this.loadIntoMemory(0, 0, undefined, 'boot');
+        }
     
         this.initHooks();
     }
@@ -58,6 +68,7 @@ export class CartridgeController {
         }
 
         const cartridgeType = this.cartridgeTypes[this.cartridgeCode];
+
         if (cartridgeType === null) {
             throw new Error('Unknown cartridge type: ' + toHex(this.cartridgeCode));
         }
@@ -72,10 +83,11 @@ export class CartridgeController {
         }
 
         // TODO: Remove old hook
-        this.memory.data.hooks.push((byteOffset, length, value, littleEndian) => {
+        this.cpu.memory.data.hooks.push((byteOffset, length, value, littleEndian) => {
             // TODO: Writing 16 bit values is broken for this
             if (byteOffset === 0xFF50 && value !== 0) {
                 // Turn off boot rom
+                
                 this.loadIntoMemory(0, 0, 0x100);
                 return false;
             } else if (this.cartridge!.onMemoryWrite !== undefined) {
@@ -100,6 +112,6 @@ export class CartridgeController {
             sourceEnd++;
         }
 
-        this.memory.write(targetOffset, uint8Array.slice(sourceOffset, sourceEnd));
+        this.cpu.memory.write(targetOffset, uint8Array.slice(sourceOffset, sourceEnd));
     }
 }
