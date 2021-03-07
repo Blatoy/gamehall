@@ -1,4 +1,4 @@
-import { CPU, FlagName, RegisterName, SortedInstructions } from "../../src/gamehall/cpu.js";
+import { CPU, ExecuteInstructionResult, FlagName, RegisterName, SortedInstructions } from "../../src/gamehall/cpu.js";
 import { Instruction, InstructionExecuteOutput } from "../../src/gamehall/instruction.js";
 import { Pointer8, Pointer16 } from "../../src/gamehall/pointer.js";
 
@@ -178,20 +178,20 @@ export class MockCPU extends CPU {
     }
 
     /** Run specified instruction in context of a test. */
-    testInstruction(instruction: string | number | number[], ...dataAtPC: number[]): InstructionExecuteOutput {
+    testInstruction(instruction: string | number | number[], ...dataAtPC: number[]): ExecuteInstructionResult {
         const instructionRef = this.findInstruction(instruction);
         if (instructionRef === undefined) {
             throw new Error('Instruction ' + instruction + ' could not be found.');
         }
 
         this.writeDataAtPC(...dataAtPC);
-        return instructionRef.execute(this);
+        return this.executeInstruction(instructionRef, -1);
     }
 
     /** Put specified data at program counter (0x0000 by default), then tries to run the instruction that's there. */
     testInstructionRaw(...dataAtPC: number[]): InstructionExecuteOutput {
         this.writeDataAtPC(...dataAtPC);
-        return this.executeInstruction().result!;
+        return this.executeInstructionFromMemory().result!;
     }
 
     /** Directly write bytes at the program counter. */

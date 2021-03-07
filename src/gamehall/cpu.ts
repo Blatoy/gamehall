@@ -71,18 +71,19 @@ export class CPU {
         z: new ZeroFlag(this.registers.f, 7),
         /** Reset all flags to 0. */
         reset: () => {
-            this.registers.f.setUint(0);
+            this.registers.f.setUint(this.registers.f.getUint() & 0b0000_1111);
         }
     };
 
     /** IME flag. */
     interruptMasterEnableFlag = false;
-    scheduledInterruptMasterEnableFlag = false;
-    setInterruptMasterEnableFlagAfterNextInstruction = false;
+    queueInterruptMasterEnableFlag = false;
 
     /** Returns true to break execution, false to continue as normal. */
     preExecuteHooks: InstructionPreExecuteHook[] = [];
     postExecuteHooks: InstructionPostExecuteHook[] = [];
+    /** Triggers before the jump. */
+    interruptHooks: InterruptHook[] = [];
 
     constructor(public memory: Memory) {
         this.instructions = this.buildInstructionList(InstructionList);
@@ -92,6 +93,7 @@ export class CPU {
         this.registers.reset();
         this.flags.reset();
         this.interruptMasterEnableFlag = false;
+        this.queueInterruptMasterEnableFlag = false;
     }
 
     private buildInstructionList(instructionDefinitions: ReadonlyArray<InstructionDefinition>): WritableSortedInstructions {
@@ -148,9 +150,7 @@ export class CPU {
         return this.getInstruction(this.memory.data, byteOffset);
     }
 
-    executeInstruction(): { instruction: Instruction, result?: InstructionExecuteOutput, elapsed: number | null } {
-        // TODO: Check interrupt
-        
+    executeInstructionFromMemory(): ExecuteInstructionResult & { instruction: Instruction } {
         const pcValue = this.registers.pc.getUint();
         const { opCodes, instruction } = this.getInstructionFromMemory(pcValue);
         this.registers.pc.setUint(pcValue + opCodes.length);
@@ -159,33 +159,35 @@ export class CPU {
             throw new NotImplementedError('Unknown instruction opcode ' + opCodes.map(c => toHex(c)));
         }
 
+        return { instruction, ...this.executeInstruction(instruction, pcValue, opCodes) };
+    }
+
+    // TODO: pcValue should be optional (in hook too)?
+    executeInstruction(instruction: Instruction, pcValue: number, opCodes?: number[]): ExecuteInstructionResult {
         try {
             // Pre-exec hooks can cancel execution
             for (const hook of this.preExecuteHooks) {
                 if (hook(instruction.name, pcValue)) {
                     this.registers.pc.setUint(pcValue);
-                    return { instruction, elapsed: null };
+                    return { elapsed: null };
                 }
             }
 
+            const lastQueueInterruptMasterEnableFlag = this.queueInterruptMasterEnableFlag;
+
             const result = instruction.execute(this);
 
-            // TODO: Nicer implementation ?
-            if (this.scheduledInterruptMasterEnableFlag) {
-                this.scheduledInterruptMasterEnableFlag = false;
+            // If this instruction queued the IME flag enable, wait until the next instruction is executed before actually enabling the IME flag
+            if (lastQueueInterruptMasterEnableFlag && this.queueInterruptMasterEnableFlag) {
                 this.interruptMasterEnableFlag = true;
+                this.queueInterruptMasterEnableFlag = false;
             }
 
-            if (this.setInterruptMasterEnableFlagAfterNextInstruction) {
-                this.setInterruptMasterEnableFlagAfterNextInstruction = false;
-                this.scheduledInterruptMasterEnableFlag = true;
-            }
-
-            executeHooks(this.postExecuteHooks, instruction.name, pcValue);
-            return { instruction, result, elapsed: MACHINE_CYCLE_SPEED * result.machineCycles };
+            executeHooks(this.postExecuteHooks, instruction.name, pcValue, result);
+            return { result, elapsed: MACHINE_CYCLE_SPEED * result.machineCycles };
         } catch (err) {
             if (err instanceof NotImplementedError) {
-                throw new NotImplementedError('Not implemented instruction ' + instruction.name + ' opcode ' + opCodes.map(c => toHex(c)));
+                throw new NotImplementedError('Not implemented instruction ' + instruction.name + ' opcode ' + opCodes?.map(c => toHex(c)));
             } else {
                 throw err;
             }
@@ -313,7 +315,7 @@ export class CPU {
             if (this.isInterruptEnabled(i) && this.isInterruptRequested(i)) {
                 this.interruptMasterEnableFlag = false;
                 this.setInterruptRequest(i, false);
-
+                
                 // Call interrupt vector
                 let interruptVector: number;
                 switch (i) {
@@ -334,6 +336,10 @@ export class CPU {
                         break;
                     default:
                         throw new Error('Unknown interrupt ' + i + ' is enabled and requested.');
+                }
+
+                for (const hook of this.interruptHooks) {
+                    hook(i, interruptVector);
                 }
 
                 this.stackPush(this.registers.pc);
@@ -367,4 +373,8 @@ export interface InstructionInformation {
 
 /** Returns true to break execution, false to continue as normal. */
 export type InstructionPreExecuteHook = (instructionName: string, offset: number) => boolean;
-export type InstructionPostExecuteHook = (instructionName: string, offset: number) => void;
+export type InstructionPostExecuteHook = (instructionName: string, offset: number, result: InstructionExecuteOutput) => void;
+/** PC is before interrupt. */
+export type InterruptHook = (interruptIndex: number, interruptVector: number) => void;
+
+export type ExecuteInstructionResult = { result?: InstructionExecuteOutput, elapsed: number | null };

@@ -29,7 +29,6 @@ describe('MISC', () => {
         cpu.expect8BitRegisters({f: {z: 1, n: 0, h: 0, c: 1}});
     });
 
-    /* TODO: Allow mock cpu to execute some hooks?
     it('EI', () => {
         cpu.resetRegisters();
         cpu.testInstruction('EI');
@@ -37,12 +36,42 @@ describe('MISC', () => {
         if (cpu.interruptMasterEnableFlag) {
             throw new Error("Interrupt master enable flag should not be enabled instantly!");
         }
+
+        if (!cpu.queueInterruptMasterEnableFlag) {
+            throw new Error("Interrupt master enable flag is not queued!");
+        }
         
         cpu.testInstruction('NOP');
 
         if (!cpu.interruptMasterEnableFlag) {
             throw new Error("Interrupt master enable flag was not set after one instruction!");
         }
+
+        if (cpu.queueInterruptMasterEnableFlag) {
+            throw new Error("Interrupt master enable flag should not be queued after one instruction!");
+        }
     });
-    */
+
+    it('EI DI instant', () => {
+        cpu.resetRegisters();
+        cpu.testInstruction('EI');
+        
+        if (cpu.interruptMasterEnableFlag) {
+            throw new Error("Interrupt master enable flag should not be enabled instantly!");
+        }
+
+        if (!cpu.queueInterruptMasterEnableFlag) {
+            throw new Error("Interrupt master enable flag is not queued!");
+        }
+        
+        cpu.testInstruction('DI');
+
+        if (cpu.interruptMasterEnableFlag) {
+            throw new Error("Interrupt master enable flag should not be enabled after DI!");
+        }
+
+        if (cpu.queueInterruptMasterEnableFlag) {
+            throw new Error("Interrupt master enable flag should not be queued after DI!");
+        }
+    });
 });
