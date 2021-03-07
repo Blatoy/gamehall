@@ -12,6 +12,15 @@ class ROMOnly implements Cartridge {
         // Load banks 0 and 1
         this.controller.loadIntoMemory(0, 0, SWITCHABLE_BANK_END);
     }
+
+    onMemoryWrite(byteOffset: number, length: number, value: number, littleEndian?: boolean): boolean {
+        if (byteOffset <= SWITCHABLE_BANK_END) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
 }
 
 export default [
