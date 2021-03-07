@@ -81,7 +81,7 @@ const miscCodes: Instruction[] = [
         code: 0x2F,
         execute: (cpu: CPU) => {
             cpu.registers.a.setUint(~cpu.registers.a.getUint());
-            cpu.flags.c.set();
+            cpu.flags.n.set();
             cpu.flags.h.set();
             return { machineCycles: 1 };
         }

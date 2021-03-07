@@ -13,14 +13,14 @@ describe('MISC', () => {
     it('CPL', () => {
         cpu.resetRegisters({ a: 0b0011_1100 });
         cpu.testInstruction('CPL');
-        cpu.expect8BitRegisters({ a: 0b1100_0011, f: { c: 1, h: 1} });
+        cpu.expect8BitRegisters({ a: 0b1100_0011, f: { n: 1, h: 1} });
         
     });
 
     it('CPL with negative', () => {
         cpu.resetRegisters({ a: 0b1011_1101 });
         cpu.testInstruction('CPL');
-        cpu.expect8BitRegisters({ a: 0b0100_0010, f: { c: 1, h: 1} });
+        cpu.expect8BitRegisters({ a: 0b0100_0010, f: { n: 1, h: 1} });
     });
 
     it('SCF', () => {
