@@ -40,7 +40,30 @@ const miscCodes: Instruction[] = [
         name: 'DAA',
         comment: 'Adjust the accumulator (register A) to a binary-coded decimal (BCD) number after BCD addition and subtraction operations',
         code: 0x27,
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        execute: (cpu: CPU) => {
+            // Based on: https://forums.nesdev.com/viewtopic.php?t=15944
+            if (cpu.flags.n.get()) {
+                // Subtraction (adjust if half-carry or carry occurred)
+                if (cpu.flags.c.get()) {
+                    cpu.registers.a.setUint(cpu.registers.a.getUint() - 0x60);
+                }
+                if (cpu.flags.h.get()) {
+                    cpu.registers.a.setUint(cpu.registers.a.getUint() - 0x6);
+                }
+            } else {
+                // Addition (adjust if half-carry or carry occurred, or if result is out of bounds)
+                if (cpu.flags.c.get() || cpu.registers.a.getUint() > 0x99) {
+                    cpu.registers.a.setUint(cpu.registers.a.getUint() + 0x60);
+                    cpu.flags.c.set();
+                }
+                if (cpu.flags.h.get() || ((cpu.registers.a.getUint() & 0x0f) > 0x09)) {
+                    cpu.registers.a.setUint(cpu.registers.a.getUint() + 0x6);
+                }
+            }
+            cpu.flags.z.compute(cpu.registers.a);
+            cpu.flags.h.clear();
+            return { machineCycles: 1 };
+        }
     },
     {
         name: 'SCF',
