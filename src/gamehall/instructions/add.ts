@@ -100,8 +100,19 @@ const addCodes: Instruction[] = [
     },
     {
         code: 0xE8,
-        name: 'ADD sp,r8', // ADD: h = (sp & 0xF) + (value & 0xF) > 0xF
-        execute: (cpu: CPU) => { throw new NotImplementedError(); }
+        name: 'ADD sp,r8',
+        execute: (cpu: CPU) => { 
+            cpu.flags.reset();
+            const v1 = cpu.registers.sp.getUint();
+            const v2 = cpu.next8().getInt();
+
+            cpu.registers.sp.setUint(v1 + v2);
+
+            cpu.flags.c.setValue((v1 & 0xFF) + (v2 & 0xFF) > 0xFF);
+            cpu.flags.h.setValue((v1 & 0xF) + (v2 & 0xF) > 0xF);
+
+            return { machineCycles: 4 };
+         }
     }
 ];
 
