@@ -88,6 +88,36 @@ export class Memory {
         }
         this.write(targetOffset, uint8Array.slice(sourceOffset, sourceOffset + size));
     }
+
+    search(data: number[], start = 0): number {
+        let matches = 0;
+        for (let i = start; i < this.uint8Array.byteLength; i++) {
+            if (this.uint8Array[i] === data[matches]) {
+                matches++;
+            } else if (matches > 0) {
+                matches = 0;
+                i--;
+            }
+
+            if (matches === data.length) {
+                return i - data.length + 1;
+            }
+        }
+        return -1;
+    }
+
+    searchAll(data: number[], start = 0): number[] {
+        const results: number[] = [];
+        while (start < this.uint8Array.byteLength) {
+            const result = this.search(data, start);
+            if (result < 0) {
+                break;
+            }
+            results.push(result);
+            start = result + 1;
+        }
+        return results;
+    }
 }
 
 /**
