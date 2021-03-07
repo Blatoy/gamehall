@@ -34,7 +34,7 @@ export class Clock {
             // TODO: Check if this needs to consume machine cycles (because of the CALL instruction)
         }
 
-        let { instruction, elapsed } = this.cpu.executeInstruction();
+        let { instruction, elapsed } = this.cpu.executeInstructionFromMemory();
         if (elapsed === null) {
             // Execution of this instruction was cancelled (e.g. breakpoint)
             return null;
