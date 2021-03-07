@@ -12,6 +12,7 @@ import { updateFlags, updateRegisters } from "./registers.js";
 import { Speed } from "./speed.js";
 import { updateStack } from "./stack.js";
 import { updateTileViewCanvas } from './tile-view.js';
+import { JumpHistory } from './jump-history.js';
 
 const CYCLE_DISPLAY_BUTTON = document.getElementById("cycle-binary-view") as HTMLButtonElement;
 const STEP_BUTTON = document.getElementById("step") as HTMLButtonElement;
@@ -22,6 +23,7 @@ const RESET_BUTTON = document.getElementById("reset-rom") as HTMLButtonElement;
 export class Debug {
     memoryEditor: MemoryEditor;
     lastInstructions: LastInstructions;
+    jumpHistory: JumpHistory;
     speed: Speed;
 
     private _activeDisplayType = DisplayType.Binary;
@@ -50,6 +52,7 @@ export class Debug {
     constructor(public cpu: CPU, public gpu: GPU, public screen: Screen, public clock: Clock) {
         this.memoryEditor = new MemoryEditor(cpu, this);
         this.lastInstructions = new LastInstructions(this);
+        this.jumpHistory = new JumpHistory(this);
         this.speed = new Speed(clock);
 
         CYCLE_DISPLAY_BUTTON.addEventListener("click", () => {
@@ -121,6 +124,7 @@ export class Debug {
         updateTileViewCanvas(this.cpu, this.gpu);
 
         this.lastInstructions.updateDOMTable();
+        this.jumpHistory.updateDOMTable();
         this.memoryEditor.updateMemoryTable();
         this.memoryEditor.renderScrollbar();
     }
