@@ -314,5 +314,5 @@ function getInstructionArgLength(instruction: string | undefined): number {
         return 0;
     }
 
-    return (instruction.match(/[ard]8/g)?.length || 0) + (instruction.match(/[ard]16/g)?.length || 0) * 2
+    return (instruction.match(/[sard]8/g)?.length || 0) + (instruction.match(/[sard]16/g)?.length || 0) * 2
 }
