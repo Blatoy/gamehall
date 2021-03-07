@@ -71,8 +71,9 @@ const miscCodes: Instruction[] = [
         comment: 'Sets the carry flag [- 0 0 1]',
         code: 0x37,
         execute: (cpu: CPU) => {
-            const zero = cpu.flags.z ? 1 : 0;
-            cpu.registers.f.setUint(0b0001_0000 | (zero << 7));
+            cpu.flags.c.set();
+            cpu.flags.n.clear();
+            cpu.flags.h.clear();
             return { machineCycles: 1 };
         }
     },
