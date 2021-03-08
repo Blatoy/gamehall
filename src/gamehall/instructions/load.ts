@@ -419,15 +419,15 @@ const load16Codes: Instruction[] = [
         name: 'LD hl,sp+s8',
         comment: 'Add the 8-bit signed operand s8 (values -128 to +127) to the stack pointer sp, and store the result in register pair hl',
         execute: (cpu: CPU) => {
-            // TODO: Endianness
             const sp = cpu.registers.sp.getUint();
             const s8 = cpu.next8().getInt();
             const value = sp + s8;
+
             cpu.registers.hl.setUint(value);
             cpu.flags.reset();
-            // TODO: Check if it's correct
-            cpu.flags.c.setValue(value > 0xFFFF);
-            cpu.flags.h.setValue(((sp & 0xFFFFF) + (s8 & 0xFFFFF)) & 0x100000);
+
+            cpu.flags.c.setValue((sp & 0xFF) + (s8 & 0xFF) > 0xFF);
+            cpu.flags.h.setValue((sp & 0xF) + (s8 & 0xF) > 0xF);
 
             return { machineCycles: 3 };
         }
