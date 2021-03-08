@@ -34,7 +34,7 @@ const popCodes: Instruction[] = [
         name: 'POP af',
         execute: (cpu: CPU) => {
             const value = cpu.stackPop16();
-            cpu.registers.af.setUint(value.getUint());
+            cpu.registers.af.setUint(value.getUint() & 0xFFF0);
             return { machineCycles: 3 };
         }
     }
