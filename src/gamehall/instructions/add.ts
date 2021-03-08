@@ -9,7 +9,7 @@ function add(cpu: CPU, value: Pointer8, machineCycles = 1): InstructionExecuteOu
     const v2 = value.getUint();
     a.setUint(v1 + v2);
     cpu.flags.z.compute(a);
-    cpu.flags.n.clear();    
+    cpu.flags.n.clear();
     cpu.flags.c.setValue(v1 + v2 > 255);
     cpu.flags.h.setValue(((v1 & 0xF) + (v2 & 0xF)) & 0x10);
     return { machineCycles };
@@ -101,7 +101,7 @@ const addCodes: Instruction[] = [
     {
         code: 0xE8,
         name: 'ADD sp,r8',
-        execute: (cpu: CPU) => { 
+        execute: (cpu: CPU) => {
             cpu.flags.reset();
             const v1 = cpu.registers.sp.getUint();
             const v2 = cpu.next8().getInt();
@@ -112,7 +112,7 @@ const addCodes: Instruction[] = [
             cpu.flags.h.setValue((v1 & 0xF) + (v2 & 0xF) > 0xF);
 
             return { machineCycles: 4 };
-         }
+        }
     }
 ];
 
