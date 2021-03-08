@@ -13,6 +13,7 @@ import { Speed } from "./speed.js";
 import { updateStack } from "./stack.js";
 import { updateTileViewCanvas } from './tile-view.js';
 import { JumpHistory } from './jump-history.js';
+import { APU } from '../apu.js';
 
 const CYCLE_DISPLAY_BUTTON = document.getElementById("cycle-binary-view") as HTMLButtonElement;
 const STEP_BUTTON = document.getElementById("step") as HTMLButtonElement;
@@ -42,6 +43,8 @@ export class Debug {
     }
     set clockPaused(value: boolean) {
         this._clockPaused = value;
+        this.apu.paused = value;
+
         if (value) {
             PAUSE_CONTINUE_IMAGE.src = "./icons/play.svg";
         } else {
@@ -49,7 +52,7 @@ export class Debug {
         }
     }
 
-    constructor(public cpu: CPU, public gpu: GPU, public screen: Screen, public clock: Clock) {
+    constructor(public cpu: CPU, public gpu: GPU, public apu: APU, public screen: Screen, public clock: Clock) {
         this.memoryEditor = new MemoryEditor(cpu, this);
         this.lastInstructions = new LastInstructions(this);
         this.jumpHistory = new JumpHistory(this);
@@ -112,7 +115,8 @@ export class Debug {
         this.screen.renderFrame(this.gpu.frameImageData);
     }
 
-    togglePaused() {
+    async togglePaused() {
+        await this.apu.load();
         this.clockPaused = !this.clockPaused;
     }
 

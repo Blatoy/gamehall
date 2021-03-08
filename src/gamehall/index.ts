@@ -7,6 +7,7 @@ import { Memory } from "./memory.js";
 import { Screen } from './screen.js';
 import { Controller } from "./controller.js";
 import { CartridgeController } from "./cartridge-controller.js";
+import { APU } from "./apu.js";
 
 async function main() {
     const memory = new Memory();
@@ -17,10 +18,11 @@ async function main() {
 
     const cpu = new CPU(memory);
     const gpu = new GPU(memory);
+    const apu = new APU(memory);
     const clock = new Clock(cpu, gpu);
     const screen = new Screen(document.getElementById("game-screen") as HTMLCanvasElement);
     const controller = new Controller(memory);
-    const debug = new Debug(cpu, gpu, screen, clock);
+    const debug = new Debug(cpu, gpu, apu, screen, clock);
 
     gpu.renderedFrameHooks.push((imgData) => screen.renderFrame(imgData));
 
