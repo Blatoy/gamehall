@@ -5,7 +5,7 @@ declare var currentTime: number;
 declare var currentFrame: number;
 declare var sampleRate: number;
 
-export type ParameterName = 'enabled' | 'masterVolume';
+export type ParameterName = 'enabled' | 'masterVolume' | 'frequency';
 
 interface ParameterDescriptor {
     name: ParameterName;
@@ -14,6 +14,14 @@ interface ParameterDescriptor {
     maxValue: number;
     automationRate?: 'a-rate' | 'k-rate';
 }
+
+// example 100 Hz sample rate
+// means 100 samples per second
+// so a wave with 25 Hz ( / 4 ) finishes one period (value += 2pi) within 4 frames
+//     number of frames for a period = sample rate / wave frequency
+
+// finishing a period within 4 frames is possible by incrementing the counter by 2pi / 4
+//     counter increment = (2 * pi) / (sample rate / wave frequency)
 
 /** Audio channel 1 */
 class QuadWaveSweepProcessor extends AudioWorkletProcessor {
@@ -32,9 +40,17 @@ class QuadWaveSweepProcessor extends AudioWorkletProcessor {
                 // Depends on a-rate or k-rate
                 const enabled = parameters['enabled'].length > 1 ? parameters['enabled'][frame] : parameters['enabled'][0];
                 const masterVolume = parameters['masterVolume'].length > 1 ? parameters['masterVolume'][frame] : parameters['masterVolume'][0];
+                const frequency = parameters['frequency'].length > 1 ? parameters['frequency'][frame] : parameters['frequency'][0];
 
-                channel[frame] = Math.sin(this.counter) * enabled * masterVolume;
-                this.counter += 10000 / sampleRate;
+                // TODO: Turn this into a square wave with 4 different duty cycles
+                let test = Math.sin(this.counter);
+                if (test < 0) {
+                    test = -1;
+                } else {
+                    test = 1;
+                }
+                channel[frame] = test * enabled * masterVolume;
+                this.counter += (2 * Math.PI) / (sampleRate / frequency);
             }
         }
 
@@ -53,6 +69,12 @@ class QuadWaveSweepProcessor extends AudioWorkletProcessor {
             defaultValue: 0.2,
             minValue: 0,
             maxValue: 1,
+            automationRate: 'a-rate'
+        }, {
+            name: 'frequency',
+            defaultValue: 131072/2048,
+            minValue: 131072/2048,
+            maxValue: 131072,
             automationRate: 'a-rate'
         }];
     }

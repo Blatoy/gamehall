@@ -13,10 +13,10 @@ async function main() {
     const memory = new Memory();
     memory.init();
 
-    const cartridgeController = new CartridgeController(memory);
+    const cpu = new CPU(memory);
+    const cartridgeController = new CartridgeController(cpu);
     await cartridgeController.initialize('boot-rom.gb', 'tetris.gb');
 
-    const cpu = new CPU(memory);
     const gpu = new GPU(memory);
     const apu = new APU(memory);
     const clock = new Clock(cpu, gpu);
