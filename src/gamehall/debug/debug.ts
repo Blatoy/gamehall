@@ -27,7 +27,7 @@ export class Debug {
     jumpHistory: JumpHistory;
     speed: Speed;
 
-    private _activeDisplayType = DisplayType.Binary;
+    private _activeDisplayType = DisplayType.Hex;
     get activeDisplayType(): DisplayType {
         return this._activeDisplayType;
     }
