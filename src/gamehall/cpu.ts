@@ -270,23 +270,24 @@ export class CPU {
 
     stackPush(value: Pointer8 | Pointer16): void {
         if (value instanceof Pointer8) {
-            this.pointerSP8().setUint(value.getUint());
             this.registers.sp.setUint(this.registers.sp.getUint() - 1);
+            this.pointerSP8().setUint(value.getUint());
         } else {
             this.registers.sp.setUint(this.registers.sp.getUint() - 1);
-            this.pointerSP16().setUint(value.getUint());
             this.registers.sp.setUint(this.registers.sp.getUint() - 1);
+            this.pointerSP16().setUint(value.getUint());
         }
     }
 
     stackPop8(): Pointer8 {
+        let p8 = this.pointerSP8();
         this.registers.sp.setUint(this.registers.sp.getUint() + 1);
-        return this.pointerSP8();
+        return p8;
     }
 
     stackPop16(): Pointer16 {
-        this.registers.sp.setUint(this.registers.sp.getUint() + 1);
         const pointer = this.pointerSP16();
+        this.registers.sp.setUint(this.registers.sp.getUint() + 1);
         this.registers.sp.setUint(this.registers.sp.getUint() + 1);
         return pointer;
     }
