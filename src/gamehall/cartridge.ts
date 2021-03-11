@@ -2,8 +2,11 @@ import { BinchHook } from "../binch/binch.js";
 import { CartridgeController } from "./cartridge-controller.js";
 
 export const ROM_START = 0x0000;
+
 export const SWITCHABLE_BANK_START = 0x4000;
 export const SWITCHABLE_BANK_END = 0x7FFF;
+export const SWITCHABLE_BANK_SIZE = 1 + SWITCHABLE_BANK_END - SWITCHABLE_BANK_START;
+
 export const RAM_START = 0xA000;
 export const RAM_END = 0xBFFF;
 export const RAM_SIZE = 1 + RAM_END - RAM_START;
