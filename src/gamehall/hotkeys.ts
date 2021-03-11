@@ -51,12 +51,12 @@ const HOTKEYS: Hotkey[] = [
     {
         name: 'controller-a',
         triggerOnRelease: true,
-        keys: [{ key: 'KeyW' }]
+        keys: [{ key: 'KeyZ' }, { key: 'KeyY' }]
     },
     {
         name: 'controller-b',
         triggerOnRelease: true,
-        keys: [{ key: 'KeyD' }]
+        keys: [{ key: 'KeyX' }]
     },
     {
         name: 'controller-start',

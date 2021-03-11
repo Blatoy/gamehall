@@ -32,7 +32,6 @@ enum ReadType {
 type ControllerInput = ControllerButton | ControllerPad;
 
 export class Controller {
-    readType = ReadType.None;
     // 0 => not pressed, 1 => pressed (this is inverted when writing to memory)
     // TODO: May change this to match gameboy behavior to avoid all the "NOT"s ?
     buttonsState = 0b0000;
@@ -74,7 +73,9 @@ export class Controller {
         });
     }
 
-    setButtonState(button: ControllerInput, type: InputType, released: boolean) {
+    setButtonState(button: ControllerButton, type: InputType.Button, released: boolean): void;
+    setButtonState(button: ControllerPad, type: InputType.Pad, released: boolean): void;
+    setButtonState(button: ControllerInput, type: InputType, released: boolean): void {
         if (released) {
             switch (type) {
                 case InputType.Button:
@@ -111,10 +112,14 @@ export class Controller {
     /**
      * Update given memory to match button state and settings
      */
-    updateControllerState() {
-        this.memory.uint8Array[CONTROLLER_ADDRESS] = 0b1100_0000 | (0b0011_0000 & (~this.readType));
+    updateControllerState(value?: ReadType) {
+        if (value === undefined) {
+            value = this.memory.uint8Array[CONTROLLER_ADDRESS];
+        }
 
-        switch (this.readType) {
+        this.memory.uint8Array[CONTROLLER_ADDRESS] = 0b1100_0000 | (0b0011_0000 & value);
+
+        switch (value) {
             case ReadType.Both:
                 this.memory.uint8Array[CONTROLLER_ADDRESS] |= (~this.padState) & (~this.buttonsState);
                 break;
@@ -128,15 +133,14 @@ export class Controller {
                 this.memory.uint8Array[CONTROLLER_ADDRESS] |= 0b1111;
                 break;
             default:
-                throw new Error("Invalid read type for controller: " + this.readType);
+                throw new Error("Invalid read type for controller: " + value);
         }
     }
 
     private initHooks() {
         this.memory.data.hooks.push((byteOffset, length, value) => {
             if (byteOffset === CONTROLLER_ADDRESS) {
-                this.readType = (0b0011_0000 & (~value));
-                this.updateControllerState();
+                this.updateControllerState(0b0011_0000 & (~value));
                 return false;
             }
             return true;
