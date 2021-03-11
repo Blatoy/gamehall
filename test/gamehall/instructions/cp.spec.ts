@@ -44,9 +44,11 @@ describe('CP', () => {
 
 
     it('d8', () => {
-        cpu.resetRegisters({ a: 0b0000_0010 });
-        cpu.testInstruction('CP d8', 0b0000_0010);
-        cpu.expect8BitRegisters({ f: {z: 1, n: 1} });
+        for (let i = 0x00; i < 0xFF; i++) {
+            cpu.resetRegisters({ a: i });
+            cpu.testInstruction('CP d8', i);
+            cpu.expect8BitRegisters({ f: {z: 1, n: 1} });
+        }
     });
 
     it('d8 carry', () => {
