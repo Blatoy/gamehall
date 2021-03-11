@@ -1,6 +1,8 @@
 import { Memory } from "./memory.js";
 import { MACHINE_CYCLE_SPEED } from './cpu.js';
+import { toHex } from "./utils.js";
 
+const OAM_DMA_CYCLES = 160;
 const SEARCHING_OAM_CYCLES = 20;
 const H_LINE_MIN_CYCLES = 43;
 const H_LINE_MAX_CYCLES = 72;
@@ -40,8 +42,23 @@ export class GPU {
     modeTime = SEARCHING_OAM_CYCLES * MACHINE_CYCLE_SPEED;
     mode = GPUMode.SearchingOAM;
 
+    screenOff = false;
+    oamDmaAddress: number | undefined = undefined;
+    oamDmaProgress = 0;
+
     constructor(private memory: Memory) {
         this.frameImageData = new ImageData(160, 144);
+
+        this.memory.data.hooks.push((byteOffset, length, value) => {
+            if (byteOffset === 0xFF46) {
+                // Start DMA transfer
+                console.log('start DMA transfer', toHex(value));
+                this.oamDmaAddress = (value % 0xE0) * 100;
+            }
+
+            // TODO: During certain GPU modes, block writes to OAM (maybe console.warn them?)
+            return true;
+        });
     }
 
     debugFrameTime = 0;
@@ -57,6 +74,39 @@ export class GPU {
         // each state does something different (drawing pixel line, move cursor back, etc)
         // -> basically updating variables so we can draw "step by step"
         // if we run into something that interupt, we instantly break out of the availableTime loop (with remaining time left, which is kept for the next gpu tick so we can "catch up")
+
+        if (this.oamDmaAddress !== undefined) {
+            // TODO: if OAM DMA is happening, CPU can only access HRAM (FF80 - FFFE)
+
+            // 1 machine cycle means 1 byte of OAM data transferred
+            const lastProgress = this.oamDmaProgress;
+            this.oamDmaProgress += time / MACHINE_CYCLE_SPEED;
+
+            for (let i = Math.floor(lastProgress); i < Math.min(160, Math.floor(this.oamDmaProgress)); i++) {
+                this.memory.uint8Array[0xFE00 + i] = this.memory.uint8Array[this.oamDmaAddress + i];
+            }
+
+            if (this.oamDmaProgress >= OAM_DMA_CYCLES) {
+                // Finish DMA transfer
+                this.oamDmaAddress = undefined;
+                this.oamDmaProgress = 0;
+            }
+        }
+
+        if ((this.memory.uint8Array[0xFF40] & 0b1000_0000) === 0) {
+            // LCD off flag
+            if (!this.screenOff) {
+                // On -> Off: Clear backbuffer
+                for (let i = 0; i < this.frameImageData.data.length; i++) {
+                    this.frameImageData.data[i] = colors[16 + (i % 4)];
+                }
+
+                this.screenOff = true;
+                this.finishedFrame(false);
+            }
+            return;
+        }
+        this.screenOff = false;
 
         loop:
         while (this.availableTime > 0) {
@@ -155,14 +205,16 @@ export class GPU {
         this.frameImageData.data[position + 3] = color[3];
     }
 
-    finishedFrame(): void {
+    finishedFrame(interrupt = true): void {
         // Send frame to listeners
         for (const hook of this.renderedFrameHooks) {
             hook(this.frameImageData);
         }
 
-        // Request interrupt
-        this.memory.uint8Array[0xFF0F] |= 0b0000_0001;
+        if (interrupt) {
+            // Request interrupt
+            this.memory.uint8Array[0xFF0F] |= 0b0000_0001;
+        }
 
         // console.log('Frame time: ', this.debugFrameTime, 'info', JSON.parse(JSON.stringify(this.debugInfo)));
         // this.debugFrameTime = 0;
@@ -312,6 +364,14 @@ export class GPU {
 
         return colors.slice(colorIndex * 4, colorIndex * 4 + 4);
     }
+
+    readFromOAM(byteOffset: number): number {
+        if (this.oamDmaAddress === undefined) {
+            return this.memory.uint8Array[byteOffset];
+        }
+
+        return 0xFF;
+    }
 }
 
 export enum Palette {
@@ -323,10 +383,13 @@ export enum Palette {
 type Color = [number, number, number, number];
 
 const colors = makeColors(
+    // Regular palette
     [155, 188, 15, 255],
     [139, 172, 15, 255],
     [48, 98, 48, 255],
     [15, 56, 15, 255],
+    // Clear color
+    [200, 200, 100, 255]
 );
 
 function makeColors(...colors: Color[]) {
