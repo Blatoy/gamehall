@@ -2,7 +2,7 @@ import { toHex } from "../utils.js";
 import { Debug } from "./debug.js";
 
 const MAX_INSTRUCTION_COUNT = 50;
-const TABLE = document.getElementById("last-instructions") as HTMLTableElement;
+const table = document.getElementById("last-instructions") as HTMLTableElement;
 
 export interface ExecutedInstruction {
     instructionName: string;
@@ -42,9 +42,9 @@ export class LastInstructions {
         this.refreshRequired = false;
 
         // TODO: Clear only non-header rows, then add this back to the HTML where it "belongs"
-        TABLE.innerHTML = `<tr><th>Offset</th><th>Instruction</th></tr>`;
+        table.innerHTML = `<tr><th>Offset</th><th>Instruction</th></tr>`;
         for (const executedInstruction of this.instructions) {
-            const newRow = TABLE.insertRow();
+            const newRow = table.insertRow();
             const offsetCell = newRow.insertCell();
 
             offsetCell.addEventListener('click', () => {

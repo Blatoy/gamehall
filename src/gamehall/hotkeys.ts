@@ -11,7 +11,7 @@ interface Shortcut {
     key: string;
 }
 
-const HOTKEYS: Hotkey[] = [
+const hotkeys: Hotkey[] = [
     {
         name: 'step',
         keys: [
@@ -94,7 +94,7 @@ export const hotkeyListeners: ((hotkeyName: string, released: boolean) => void)[
 
 export function addDocumentListener(): void {
     document.addEventListener('keydown', (ev) => {
-        const hotkey = HOTKEYS.find(h => h.keys.find(k =>
+        const hotkey = hotkeys.find(h => h.keys.find(k =>
             (k.ctrl || false) === ev.ctrlKey &&
             (k.shift || false) === ev.shiftKey &&
             (k.alt || false) === ev.altKey &&
@@ -110,7 +110,7 @@ export function addDocumentListener(): void {
     });
 
     document.addEventListener('keyup', (ev) => {
-        const hotkey = HOTKEYS.find(h => h.keys.find(k => k.key === ev.code));
+        const hotkey = hotkeys.find(h => h.keys.find(k => k.key === ev.code));
 
         if (hotkey && hotkey.triggerOnRelease) {
             for (const listener of hotkeyListeners) {

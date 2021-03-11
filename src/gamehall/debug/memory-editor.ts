@@ -7,15 +7,15 @@ const COLUMN_COUNT = 0x10;
 const MAX_ROW_OFFSET = 0x1000 - ROW_COUNT;
 const MEMORY_SIZE = 0xFFFF;
 
-const TABLE = document.getElementById("memory-table") as HTMLTableElement;
-const PC_ADDRESS = document.getElementById("pc-address") as HTMLSpanElement;
-const OPCODE_AT_PC = document.getElementById("instruction-at-pc") as HTMLTableDataCellElement;
-const OPCODE_AT_SELECTION = document.getElementById("instruction-at-selected") as HTMLTableDataCellElement;
-const FOLLOW_PC = document.getElementById("follow-pc") as HTMLInputElement;
-const GOTO_INPUT = document.getElementById("goto-input") as HTMLInputElement;
-const SET_VALUE_INPUT = document.getElementById("set-value-input") as HTMLInputElement;
-const CANVAS = document.getElementById("memory-table-scrollbar") as HTMLCanvasElement;
-const CTX = CANVAS.getContext("2d")!;
+const table = document.getElementById("memory-table") as HTMLTableElement;
+const pcAddress = document.getElementById("pc-address") as HTMLSpanElement;
+const opcodeAtPC = document.getElementById("instruction-at-pc") as HTMLTableDataCellElement;
+const opcodeAtSelection = document.getElementById("instruction-at-selected") as HTMLTableDataCellElement;
+const followPC = document.getElementById("follow-pc") as HTMLInputElement;
+const gotoInput = document.getElementById("goto-input") as HTMLInputElement;
+const setValueInput = document.getElementById("set-value-input") as HTMLInputElement;
+const canvas = document.getElementById("memory-table-scrollbar") as HTMLCanvasElement;
+const ctx = canvas.getContext("2d")!;
 
 export class MemoryEditor {
     private _selectedPosition = 0;
@@ -25,7 +25,7 @@ export class MemoryEditor {
     skipNextBreakpoint = false;
 
     get rows(): HTMLTableRowElement[] {
-        return Array.from(TABLE.children[0].children).slice(1) as HTMLTableRowElement[];
+        return Array.from(table.children[0].children).slice(1) as HTMLTableRowElement[];
     }
 
     get rowOffset(): number {
@@ -62,13 +62,13 @@ export class MemoryEditor {
             this.rowOffset = selectedRow - (ROW_COUNT / 2);
         }
 
-        OPCODE_AT_SELECTION.innerHTML = this.cpu.getInstructionFromMemory(this.selectedPosition).instruction?.name || '???';
+        opcodeAtSelection.innerHTML = this.cpu.getInstructionFromMemory(this.selectedPosition).instruction?.name || '???';
     }
 
     constructor(private cpu: CPU, debug: Debug) {
         this.cpu.preExecuteHooks.push((_, offset) => {
             if (!debug.clockPaused && this.breakpoints.includes(offset) && !this.skipNextBreakpoint) {
-                FOLLOW_PC.checked = true;
+                followPC.checked = true;
                 debug.clockPaused = true;
                 this.skipNextBreakpoint = true;
                 return true;
@@ -82,11 +82,11 @@ export class MemoryEditor {
     }
 
     initInputs(): void {
-        GOTO_INPUT.addEventListener("keydown", (ev: KeyboardEvent) => {
+        gotoInput.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (ev.key === "Enter") {
-                FOLLOW_PC.checked = false;
+                followPC.checked = false;
     
-                let targetAddress = getValueFromString(this.cpu, GOTO_INPUT.value);
+                let targetAddress = getValueFromString(this.cpu, gotoInput.value);
                 if (ev.shiftKey) {
                     this.cpu.jump(targetAddress);
                 } if(ev.ctrlKey) {
@@ -97,8 +97,8 @@ export class MemoryEditor {
             } 
         });
 
-        SET_VALUE_INPUT.addEventListener("keydown", (ev: KeyboardEvent) => {
-            FOLLOW_PC.checked = false;
+        setValueInput.addEventListener("keydown", (ev: KeyboardEvent) => {
+            followPC.checked = false;
 
             let preventDefault = true;
             if (ev.key === "ArrowLeft" || (ev.key === "Tab" && ev.shiftKey)) {
@@ -110,8 +110,8 @@ export class MemoryEditor {
             } else if (ev.key === "ArrowDown") {
                 this.selectedPosition += COLUMN_COUNT;
             } else if (ev.key === "Enter") {
-                this.cpu.pointer8(this.selectedPosition).setUint(getValueFromString(this.cpu, SET_VALUE_INPUT.value));
-                SET_VALUE_INPUT.value = "";
+                this.cpu.pointer8(this.selectedPosition).setUint(getValueFromString(this.cpu, setValueInput.value));
+                setValueInput.value = "";
 
                 if (ev.shiftKey) {
                     this.selectedPosition--;
@@ -127,36 +127,36 @@ export class MemoryEditor {
             }
         });
 
-        CANVAS.addEventListener("mousedown", (ev: MouseEvent) => {
+        canvas.addEventListener("mousedown", (ev: MouseEvent) => {
             this.draggingScrollbar = true;
-            FOLLOW_PC.checked = false;
+            followPC.checked = false;
             this.scrollTo(ev);
             ev.preventDefault();
         });
-        CANVAS.addEventListener("mousemove", (ev: MouseEvent) => {
+        canvas.addEventListener("mousemove", (ev: MouseEvent) => {
             if (!this.draggingScrollbar) {
                 return;
             }
 
             this.scrollTo(ev);
         });
-        CANVAS.addEventListener("mouseup", (ev: MouseEvent) => {
+        canvas.addEventListener("mouseup", (ev: MouseEvent) => {
             this.draggingScrollbar = false;
         });
-        CANVAS.addEventListener("mouseleave", (ev: MouseEvent) => {
+        canvas.addEventListener("mouseleave", (ev: MouseEvent) => {
             this.draggingScrollbar = false;
         });
     }
 
     scrollTo(ev: MouseEvent) {
         // TODO: Also allow dragging outside of the scrollbar
-        const scrollPercentage = ev.offsetY / CANVAS.height;
+        const scrollPercentage = ev.offsetY / canvas.height;
         this.rowOffset = Math.floor(scrollPercentage * MAX_ROW_OFFSET);
     }
 
     initMemoryTable(): void {
         for (let row = 0; row < ROW_COUNT; row++) {
-            const tableRow = TABLE.insertRow();
+            const tableRow = table.insertRow();
             for (let col = 0; col < COLUMN_COUNT + 1; col++) {
                 const tableCell = tableRow.insertCell();
                 if (col === 0) {
@@ -172,8 +172,8 @@ export class MemoryEditor {
             }
         }
 
-        TABLE.addEventListener('wheel', (ev) => {
-            FOLLOW_PC.checked = false;
+        table.addEventListener('wheel', (ev) => {
+            followPC.checked = false;
 
             if (ev.deltaY > 0) {
                 // Scroll down
@@ -192,7 +192,7 @@ export class MemoryEditor {
         const instruction = this.cpu.getInstructionFromMemory(pcValue);
         const instructionOpcodeLength = instruction.opCodes.length;
         const instructionArgLength = getInstructionArgLength(instruction.instruction?.name);
-        if (FOLLOW_PC.checked) {
+        if (followPC.checked) {
             this.rowOffset = Math.floor(pcValue / COLUMN_COUNT) - Math.floor(ROW_COUNT / 2);
         }
         
@@ -250,8 +250,8 @@ export class MemoryEditor {
             }
         }
 
-        PC_ADDRESS.innerHTML = toHex(pcValue, 2, '$');
-        OPCODE_AT_PC.innerHTML = instruction.instruction?.name || '???';
+        pcAddress.innerHTML = toHex(pcValue, 2, '$');
+        opcodeAtPC.innerHTML = instruction.instruction?.name || '???';
     }
 
     toggleBreakpointAt(address: number) {
@@ -265,7 +265,7 @@ export class MemoryEditor {
 
     clickCell(event: MouseEvent, row: number, column: number): void {
         event.preventDefault();
-        FOLLOW_PC.checked = false;
+        followPC.checked = false;
 
         // Convert "relative to absolute" coordinates
         const absRow = row + this.rowOffset;
@@ -280,31 +280,31 @@ export class MemoryEditor {
         } else {
             // Select position
             this.selectedPosition = position;
-            SET_VALUE_INPUT.focus();
-            SET_VALUE_INPUT.value = "";
+            setValueInput.focus();
+            setValueInput.value = "";
         }
     }
 
     renderScrollbar(): void {
-        CANVAS.height = CANVAS.clientHeight;
+        canvas.height = canvas.clientHeight;
 
-        CTX.fillStyle = "black";
-        CTX.fillRect(0, 0, CANVAS.width, CANVAS.height);
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        CTX.globalAlpha = 0.5;
-        CTX.fillStyle = "white";
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = "white";
 
         // Scroll bar
-        const scrollHeight = CANVAS.height / 10;
+        const scrollHeight = canvas.height / 10;
         const scrollPercentage = this.rowOffset / MAX_ROW_OFFSET;
-        CTX.fillRect(0, scrollPercentage * Math.max(0, CANVAS.height - scrollHeight), CANVAS.width, scrollHeight);
-        CTX.globalAlpha = 1;
+        ctx.fillRect(0, scrollPercentage * Math.max(0, canvas.height - scrollHeight), canvas.width, scrollHeight);
+        ctx.globalAlpha = 1;
         
         // PC
         const pcScrollPercentage = this.cpu.registers.pc.getUint() / MEMORY_SIZE;
         const pcScrollHeight = 3;
-        CTX.fillStyle = "red";
-        CTX.fillRect(0, pcScrollPercentage * Math.max(0, CANVAS.height - pcScrollHeight), CANVAS.width, pcScrollHeight);
+        ctx.fillStyle = "red";
+        ctx.fillRect(0, pcScrollPercentage * Math.max(0, canvas.height - pcScrollHeight), canvas.width, pcScrollHeight);
 
     }
 }

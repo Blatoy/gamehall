@@ -1,20 +1,20 @@
 import { CPU } from "../cpu.js";
 
-const CANVAS = document.getElementById('memory-view') as HTMLCanvasElement;
-const CTX = CANVAS.getContext('2d')!;
-const IMGDATA = CTX.createImageData(256, 256);
-const IMGDATA_SIZE = 256 * 256;
+const canvas = document.getElementById('memory-view') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d')!;
+const imgdata = ctx.createImageData(256, 256);
+const imgdataSize = 256 * 256;
 
 const overlayCanvas = document.createElement("canvas");
 
 function generateOverlay() {
-    const imageDataOverlay = CTX.createImageData(256, 256);
+    const imageDataOverlay = ctx.createImageData(256, 256);
     overlayCanvas.width = 256;
     overlayCanvas.height = 256;
 
-    const ctx = overlayCanvas.getContext("2d");
+    const overlayCtx = overlayCanvas.getContext("2d");
     
-    for (let i = 0; i < IMGDATA_SIZE * 4; i += 4) {
+    for (let i = 0; i < imgdataSize * 4; i += 4) {
         const addr = i / 4;
 
         if (addr >= 0x014F && addr <= 0x3FFF) {
@@ -50,31 +50,31 @@ function generateOverlay() {
         }
     }
 
-    ctx?.putImageData(imageDataOverlay, 0, 0);
+    overlayCtx?.putImageData(imageDataOverlay, 0, 0);
 }
 
 export function updateMemoryViewCanvas(cpu: CPU): void {
-    for (let i = 0; i < IMGDATA_SIZE * 4; i += 4) {
+    for (let i = 0; i < imgdataSize * 4; i += 4) {
         const value = cpu.memory.uint8Array[i / 4];
 
-        IMGDATA.data[i] = value;
-        IMGDATA.data[i + 1] = value;
-        IMGDATA.data[i + 2] = value;
-        IMGDATA.data[i + 3] = 255;
+        imgdata.data[i] = value;
+        imgdata.data[i + 1] = value;
+        imgdata.data[i + 2] = value;
+        imgdata.data[i + 3] = 255;
     }
 
-    CTX.putImageData(IMGDATA, 0, 0);
-    CTX.globalAlpha = 0.2;
-    CTX.drawImage(overlayCanvas, 0, 0);
-    CTX.globalAlpha = 1;
+    ctx.putImageData(imgdata, 0, 0);
+    ctx.globalAlpha = 0.2;
+    ctx.drawImage(overlayCanvas, 0, 0);
+    ctx.globalAlpha = 1;
 
     const pc = cpu.registers.pc.getUint();
-    CTX.fillStyle = '#ff0000';
-    CTX.fillRect(pc % 256 - 1, Math.floor(pc / 256) - 1, 3, 3);
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(pc % 256 - 1, Math.floor(pc / 256) - 1, 3, 3);
 
     const sp = cpu.registers.sp.getUint();
-    CTX.fillStyle = '#00ff00';
-    CTX.fillRect(sp % 256 - 1, Math.floor(sp / 256) - 1, 3, 3);
+    ctx.fillStyle = '#00ff00';
+    ctx.fillRect(sp % 256 - 1, Math.floor(sp / 256) - 1, 3, 3);
 }
 
 generateOverlay();

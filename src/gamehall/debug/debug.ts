@@ -1,5 +1,4 @@
 import { Screen } from '../screen.js';
-import { Cartridge } from "../cartridge.js";
 import { Clock } from "../clock.js";
 import { CPU } from "../cpu.js";
 import { GPU } from "../gpu.js";
@@ -15,11 +14,11 @@ import { updateTileViewCanvas } from './tile-view.js';
 import { JumpHistory } from './jump-history.js';
 import { APU } from '../apu.js';
 
-const CYCLE_DISPLAY_BUTTON = document.getElementById("cycle-binary-view") as HTMLButtonElement;
-const STEP_BUTTON = document.getElementById("step") as HTMLButtonElement;
-const PAUSE_CONTINUE_BUTTON = document.getElementById("pause-continue") as HTMLButtonElement;
-const PAUSE_CONTINUE_IMAGE = document.getElementById("play-pause-img") as HTMLImageElement;
-const RESET_BUTTON = document.getElementById("reset-rom") as HTMLButtonElement;
+const cycleDisplayButton = document.getElementById("cycle-binary-view") as HTMLButtonElement;
+const stepButton = document.getElementById("step") as HTMLButtonElement;
+const pauseContinueButton = document.getElementById("pause-continue") as HTMLButtonElement;
+const pauseContinueImage = document.getElementById("play-pause-img") as HTMLImageElement;
+const resetButton = document.getElementById("reset-rom") as HTMLButtonElement;
 
 export class Debug {
     memoryEditor: MemoryEditor;
@@ -34,7 +33,7 @@ export class Debug {
 
     set activeDisplayType(value: DisplayType) {
         this._activeDisplayType = value;
-        CYCLE_DISPLAY_BUTTON.querySelector('label')!.innerText = DisplayType[this.activeDisplayType];
+        cycleDisplayButton.querySelector('label')!.innerText = DisplayType[this.activeDisplayType];
     }
 
     private _clockPaused = true;
@@ -46,9 +45,9 @@ export class Debug {
         this.apu.paused = value;
 
         if (value) {
-            PAUSE_CONTINUE_IMAGE.src = "./icons/play.svg";
+            pauseContinueImage.src = "./icons/play.svg";
         } else {
-            PAUSE_CONTINUE_IMAGE.src = "./icons/pause.svg";
+            pauseContinueImage.src = "./icons/pause.svg";
         }
     }
 
@@ -58,19 +57,19 @@ export class Debug {
         this.jumpHistory = new JumpHistory(this);
         this.speed = new Speed(clock);
 
-        CYCLE_DISPLAY_BUTTON.addEventListener("click", () => {
+        cycleDisplayButton.addEventListener("click", () => {
             this.cycleDisplayType();
         });
 
-        STEP_BUTTON.addEventListener("click", () => {
+        stepButton.addEventListener("click", () => {
             this.step();
         });
 
-        PAUSE_CONTINUE_BUTTON.addEventListener("click", () => {
+        pauseContinueButton.addEventListener("click", () => {
             this.togglePaused();
         });
 
-        RESET_BUTTON.addEventListener("click", () => {
+        resetButton.addEventListener("click", () => {
             this.resetROM();
         });
     }

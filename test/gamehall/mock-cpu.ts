@@ -19,7 +19,7 @@ export type FlagExpectedValues = {
     [name in FlagName]?: number | boolean | null;
 }
 
-const IGNORE_8_BIT_REGISTER_EXPECTATIONS: RegisterExpectedValues = {
+const ignore8bitRegisterExpectations: RegisterExpectedValues = {
     a: null,
     b: null,
     c: null,
@@ -29,7 +29,7 @@ const IGNORE_8_BIT_REGISTER_EXPECTATIONS: RegisterExpectedValues = {
     h: null,
     l: null
 };
-const IGNORE_16_BIT_REGISTER_EXPECTATIONS: RegisterExpectedValues = {
+const ignore16bitRegisterExpectations: RegisterExpectedValues = {
     af: null,
     bc: null,
     de: null,
@@ -125,12 +125,12 @@ export class MockCPU extends CPU {
 
     /** Null = I don't care about this, undefined = I expect it to be unchanged */
     expect8BitRegisters(values: RegisterExpectedValues = {}) {
-        this.expectRegisters({ ...IGNORE_16_BIT_REGISTER_EXPECTATIONS, ...values });
+        this.expectRegisters({ ...ignore16bitRegisterExpectations, ...values });
     }
 
     /** Null = I don't care about this, undefined = I expect it to be unchanged */
     expect16BitRegisters(values: RegisterExpectedValues = {}) {
-        this.expectRegisters({ ...IGNORE_8_BIT_REGISTER_EXPECTATIONS, ...values });
+        this.expectRegisters({ ...ignore8bitRegisterExpectations, ...values });
     }
 
     private findInstructionByName(name: string, parentInstructions: SortedInstructions): Instruction | undefined {

@@ -3,7 +3,7 @@ import { DisplayType, getFormattedValue } from "./debug.js";
 
 
 const MAX_STACK_LENGTH = 32;
-const TABLE = document.getElementById("stack-table") as HTMLTableElement;
+const table = document.getElementById("stack-table") as HTMLTableElement;
 
 export function updateStack(cpu: CPU, displayType: DisplayType) {
     // TODO: Clear only non-header rows, then add this back to the HTML where it "belongs"
@@ -13,14 +13,14 @@ export function updateStack(cpu: CPU, displayType: DisplayType) {
 
     // SP is at 0 when we start and shouldn't be there otherwise
     if (sp === 0 || sp === 0xFFFE) {
-        TABLE.innerHTML = `<tr><th>Stack is empty</th></tr>`;
+        table.innerHTML = `<tr><th>Stack is empty</th></tr>`;
         return;
     }
 
-    TABLE.innerHTML = `<tr><th>Address</th><th>Value</th></tr>`;
+    table.innerHTML = `<tr><th>Address</th><th>Value</th></tr>`;
     
     for (let i = sp + 1; i <= maxValue; i++) {
-        const newRow = TABLE.insertRow();
+        const newRow = table.insertRow();
         newRow.insertCell().innerText = '$' + getFormattedValue(i, DisplayType.Hex);
         newRow.insertCell().innerText = getFormattedValue(cpu.pointer8(i).getUint(), displayType);
     }
