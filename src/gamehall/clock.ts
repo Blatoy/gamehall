@@ -1,9 +1,27 @@
 import { CPU } from "./cpu.js";
 import { GPU } from "./gpu.js";
 
+/**
+ * Divider register increment in milliseconds.
+ */
+const DIV_REGISTER_RATE = 1000 / 16384;
+
 export class Clock {
 
-    constructor(private cpu: CPU, private gpu: GPU) { }
+    private _divRegister = 0;
+
+    constructor(private cpu: CPU, private gpu: GPU) {
+        // DIV register reset hook
+        this.cpu.memory.data.hooks.push((byteOffset, length, value) => {
+            // TODO: 16-bit writes
+            if (byteOffset === 0xFF04) {
+                this.cpu.memory.uint8Array[0xFF04] = 0;
+                this._divRegister = 0;
+                return false;
+            }
+            return true;
+        });
+    }
 
     speedFactor = 1;
     /** One clock tick may not take longer than this many milliseconds. */
@@ -42,6 +60,14 @@ export class Clock {
             throw new Error('Instruction ' + instruction.name + ' returned invalid duration ' + elapsed);
         }
 
+        // Cumulate DIV register changes over time
+        this._divRegister = this._divRegister + DIV_REGISTER_RATE * elapsed;
+        if (this._divRegister >= 1) {
+            this.cpu.memory.uint8Array[0xFF04] = this.cpu.memory.uint8Array[0xFF04] + this._divRegister;
+            this._divRegister -= Math.floor(this._divRegister);
+        }
+
+        // GPU tick
         this.gpu.tick(elapsed);
 
         return elapsed;
