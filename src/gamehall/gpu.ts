@@ -268,8 +268,8 @@ export class GPU {
 
         // Objects
         const objData = this.getObjectData(this.scanX, this.scanY);
-        if (objData !== undefined && objData.colorIndex !== 0) { // 0 is transparent for objects
-            color = this.getPaletteColor(objData.colorIndex, objData.palette);
+        if (objData.colorIndex !== 0) { // 0 is transparent for objects
+            color = this.getPaletteColor(objData.colorIndex, objData.palette!);
         }
 
         const position = (this.scanX + this.scanY * this.frameImageData.width) * 4;
@@ -408,17 +408,23 @@ export class GPU {
 
     getBgMapData1(px: number, py: number): number {
         if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0001) > 0) {
-            return this.getTileData(this.getTileIndex(px, py, 0), px, py, 0);
+            const bgMap = (this.memory.uint8Array[LCD_CONTROL] & 0b0000_1000) >> 3;
+            return this.getTileData(this.getTileIndex(px, py, bgMap), px, py, 0);
         } else {
             // BG is disabled
             return 0;
         }
     }
 
-    getObjectData(px: number, py: number): { colorIndex: number, palette: Palette.Object0 | Palette.Object1 } | undefined {
+    getObjectData(px: number, py: number): { colorIndex: number, palette?: Palette.Object0 | Palette.Object1 } {
+        // Early-return if object drawing is disabled
+        if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0010) === 0) {
+            return { colorIndex: 0 };
+        }
+
         // Early-return if we already drew more than 10 sprites in this scanline
         if (this.oamIndicesPerScanline.size > 10) {
-            return { colorIndex: 0, palette: Palette.Object0 };
+            return { colorIndex: 0 };
         }
 
         // Go through list of objects (4 bytes each) in OAM
@@ -449,7 +455,7 @@ export class GPU {
             // If this added an 11th sprite, early return color 0 since we'd draw too many sprites per scanline
             this.oamIndicesPerScanline.add(i);
             if (this.oamIndicesPerScanline.size > 10) {
-                return { colorIndex: 0, palette: Palette.Object0 };
+                return { colorIndex: 0 };
             }
 
             const palette = (this.readFromOAM(0xFE03 + i) & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
@@ -463,7 +469,7 @@ export class GPU {
             return { colorIndex: this.getTileData(tileIndex, rx, ry, 0), palette };
         }
 
-        return undefined;
+        return { colorIndex: 0 };
     }
 
     /**
