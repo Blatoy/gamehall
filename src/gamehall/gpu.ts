@@ -68,6 +68,7 @@ export class GPU {
     screenOff = false;
     oamDmaAddress: number | undefined = undefined;
     oamDmaProgress = 0;
+    private oamIndicesPerScanline = new Set<number>();
 
     constructor(private memory: Memory) {
         this.frameImageData = new ImageData(160, 144);
@@ -245,6 +246,7 @@ export class GPU {
                         // this.debugInfo.push({ type: 'scanX is 160', time: this.debugFrameTime, cycles: this.debugFrameTime / MACHINE_CYCLE_SPEED });
                         this.mode = GPUMode.HBlank;
                         this.modeTime = H_LINE_DRAWING_AND_BLANK_CYCLES * MACHINE_CYCLE_SPEED - this.modeTime;
+                        this.oamIndicesPerScanline.clear();
 
                         if ((this.memory.uint8Array[LCD_STAT] & 0b0000_1000) > 0) {
                             // Request STAT (hblank) interrupt
@@ -308,6 +310,10 @@ export class GPU {
         return true;
     }
 
+    /**
+     * @param bgMap BGMap 0 is $9800-9BFF
+     * BGMap 1 is $9C00-9FFF
+     */
     getTileIndex(px: number, py: number, bgMap: number): number {
         px = px % 256;
         py = py % 256;
@@ -332,8 +338,6 @@ export class GPU {
 
     /**
      * Returns palette index for given pixel coordinate (either relative to screen or to tile) into tile data.
-     * @param bgMap BGMap 0 is $9800-9BFF
-     * BGMap 1 is $9C00-9FFF
      * @param block Block 0 is $8000-87FF
      * Block 1 is $8800-8FFF
      * Block 2 is $9000-97FF
@@ -412,12 +416,15 @@ export class GPU {
     }
 
     getObjectData(px: number, py: number): { colorIndex: number, palette: Palette.Object0 | Palette.Object1 } | undefined {
-        // TODO: Allow max 10 objects per scanline (afterwards just early-return 0 here)
+        // Early-return if we already drew more than 10 sprites in this scanline
+        if (this.oamIndicesPerScanline.size > 10) {
+            return { colorIndex: 0, palette: Palette.Object0 };
+        }
 
         // Go through list of objects (4 bytes each) in OAM
         for (let i = 0; i < 160; i += 4) {
-            const objY = this.memory.uint8Array[0xFE00 + i] - 16;
-            const objX = this.memory.uint8Array[0xFE01 + i] - 8;
+            const objY = this.readFromOAM(0xFE00 + i) - 16;
+            const objX = this.readFromOAM(0xFE01 + i) - 8;
 
             let tileIndex: number;
             let spriteWidth: number;
@@ -429,7 +436,7 @@ export class GPU {
                 spriteHeight = 16;
             } else {
                 // 8x8 tile indexing
-                tileIndex = this.memory.uint8Array[0xFE02 + i];
+                tileIndex = this.readFromOAM(0xFE02 + i);
                 spriteWidth = 8;
                 spriteHeight = 8;
             }
@@ -439,9 +446,15 @@ export class GPU {
                 continue;
             }
 
-            const palette = (this.memory.uint8Array[0xFE03 + i] & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
-            const xFlip = (this.memory.uint8Array[0xFE03 + i] & 0b0010_0000) > 0;
-            const yFlip = (this.memory.uint8Array[0xFE03 + i] & 0b0100_0000) > 0;
+            // If this added an 11th sprite, early return color 0 since we'd draw too many sprites per scanline
+            this.oamIndicesPerScanline.add(i);
+            if (this.oamIndicesPerScanline.size > 10) {
+                return { colorIndex: 0, palette: Palette.Object0 };
+            }
+
+            const palette = (this.readFromOAM(0xFE03 + i) & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
+            const xFlip = (this.readFromOAM(0xFE03 + i) & 0b0010_0000) > 0;
+            const yFlip = (this.readFromOAM(0xFE03 + i) & 0b0100_0000) > 0;
             // TODO: Bit7   BG and Window over OBJ (0=No, 1=BG and Window colors 1-3 over the OBJ)
 
             const rx = xFlip ? spriteWidth - px - objX : px - objX;
@@ -453,6 +466,9 @@ export class GPU {
         return undefined;
     }
 
+    /**
+     * Notice: for objects, color index 0 is always transparent instead of the color returned by this function.
+     */
     getPaletteColor(value: number, paletteData: Palette): Uint8ClampedArray {
         let address: number;
         switch (paletteData) {
