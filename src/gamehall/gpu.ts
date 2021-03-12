@@ -314,7 +314,7 @@ export class GPU {
      * @param bgMap BGMap 0 is $9800-9BFF
      * BGMap 1 is $9C00-9FFF
      */
-    getTileIndex(px: number, py: number, bgMap: number): number {
+    getTileIndex(px: number, py: number, bgMap: number, signedAddressing: boolean): number {
         px = px % 256;
         py = py % 256;
 
@@ -333,7 +333,13 @@ export class GPU {
 
         const tx = Math.floor(px / TILE_WIDTH);
         const ty = Math.floor(py / TILE_HEIGHT);
-        return this.memory.uint8Array[bgMapAddress + tx + ty * TILE_X_COUNT];
+        let tileIndex = this.memory.uint8Array[bgMapAddress + tx + ty * TILE_X_COUNT];
+        if (signedAddressing) {
+            if (tileIndex > 127) {
+                tileIndex -= 256;
+            }
+        }
+        return tileIndex;
     }
 
     /**
@@ -409,7 +415,8 @@ export class GPU {
     getBgMapData1(px: number, py: number): number {
         if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0001) > 0) {
             const bgMap = (this.memory.uint8Array[LCD_CONTROL] & 0b0000_1000) >> 3;
-            return this.getTileData(this.getTileIndex(px, py, bgMap), px, py, 0);
+            const signedAddressing = (this.memory.uint8Array[LCD_CONTROL] & 0b0001_0000) === 0;
+            return this.getTileData(this.getTileIndex(px, py, bgMap, signedAddressing), px, py, signedAddressing ? 2 : 0);
         } else {
             // BG is disabled
             return 0;
