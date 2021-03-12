@@ -103,9 +103,11 @@ export class Debug {
         // TODO: Make reset more exhaustive later
         this.cpu.reset();
         this.cpu.memory.init();
-        this.lastInstructions.reset();
-
         // TODO: ROM loading should not be done in debug.ts
+
+        this.lastInstructions.reset();
+        this.jumpHistory.reset();
+        this.afterTick();
     }
 
     step() {

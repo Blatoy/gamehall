@@ -40,7 +40,6 @@ export class JumpHistory {
     reset() {
         this.instructions = [];
         this.refreshRequired = true;
-        this.updateDOMTable();
     }
 
     addInterrupt(interruptIndex: Interrupt, interruptVector: number) {

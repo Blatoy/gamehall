@@ -23,7 +23,6 @@ export class LastInstructions {
     reset() {
         this.instructions = [];
         this.refreshRequired = true;
-        this.updateDOMTable();
     }
 
     addInstruction(instruction: ExecutedInstruction): void {
