@@ -518,86 +518,70 @@ export class GPU {
             return { colorIndex: 0 };
         }
 
+        // Cached values that should not change during drawing
+        const tallSprites = (this.memory.uint8Array[LCD_CONTROL] & 0b0000_0100) > 0;
+
         // Go through list of objects (4 bytes each) in OAM
         for (let i = 0; i < 160; i += 4) {
-            const objectData = this.getSpecificObjectData(px, py, i, true);
-            if (objectData === 'no-pixel-data') {
-                // This oam entry does not have pixel data here
+            const spriteWidth = 8;
+            const objY = this.readFromOAM(0xFE00 + i) - 16;
+            if (py < objY) {
                 continue;
-            } else if (objectData === 'too-many-objects') {
-                // Early-return if we already drew more than 10 sprites in this scanline
+            }
+    
+            const objX = this.readFromOAM(0xFE01 + i) - 8;
+            if (px < objX || px >= objX + spriteWidth) {
+                continue;
+            }
+    
+            let tileIndex: number;
+            let spriteHeight: number;
+            if (tallSprites) {
+                // 8x16 tile indexing
+                spriteHeight = 16;
+                if (py >= objY + spriteHeight) {
+                    continue;
+                }
+    
+                if (py < objY + spriteWidth) {
+                    // Top tile
+                    tileIndex = this.readFromOAM(0xFE02 + i) & 0b1111_1110;
+                } else {
+                    // Bottom tile
+                    tileIndex = this.readFromOAM(0xFE02 + i) | 0b0000_0001;
+                }
+            } else {
+                // 8x8 tile indexing
+                spriteHeight = 8;
+                if (py >= objY + spriteHeight) {
+                    continue;
+                }
+    
+                tileIndex = this.readFromOAM(0xFE02 + i);
+            }
+    
+            // If this added an 11th sprite, early return color 0 since we'd draw too many sprites per scanline
+            this.oamIndicesPerScanline.add(i);
+            if (this.oamIndicesPerScanline.size > 10) {
                 return { colorIndex: 0 };
-            } else if (objectData.colorIndex !== 0) {
-                // We found a non-transparent pixel
-                return objectData;
+            }
+    
+            const attributes = this.readFromOAM(0xFE03 + i);
+            const xFlip = (attributes & 0b0010_0000) > 0;
+            const yFlip = (attributes & 0b0100_0000) > 0;
+    
+            const rx = xFlip ? spriteWidth - px - objX : px - objX;
+            const ry = yFlip ? spriteHeight - py - objY : py - objY;
+    
+            const colorIndex = this.getTileData(tileIndex, rx, ry, 0);
+            if (colorIndex !== 0) {
+                const palette = (attributes & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
+                const bit7 = (attributes & 0b1000_0000) > 0;
+                return { colorIndex, palette, bit7 };
             }
         }
 
         return { colorIndex: 0 };
-    }
-
-    /**
-     * @param limitObjectsPerScanline If set to true, add object towards per-scanline limit and may return 'too-many-objects'.
-     */
-    getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline?: false): Required<OAMInfo> | 'no-pixel-data';
-    getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline?: true): Required<OAMInfo> | 'no-pixel-data' | 'too-many-objects';
-    getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline = false): Required<OAMInfo> | 'no-pixel-data' | 'too-many-objects' {
-        const spriteWidth = 8;
-        const objY = this.readFromOAM(0xFE00 + oamIndex) - 16;
-        if (py < objY) {
-            return 'no-pixel-data';
-        }
-
-        const objX = this.readFromOAM(0xFE01 + oamIndex) - 8;
-        if (px < objX || px >= objX + spriteWidth) {
-            return 'no-pixel-data';
-        }
-
-        let tileIndex: number;
-        let spriteHeight: number;
-        if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0100) > 0) {
-            // 8x16 tile indexing
-            spriteHeight = 16;
-            if (py >= objY + spriteHeight) {
-                return 'no-pixel-data';
-            }
-
-            if (py < objY + spriteWidth) {
-                // Top tile
-                tileIndex = this.readFromOAM(0xFE02 + oamIndex) & 0b1111_1110;
-            } else {
-                // Bottom tile
-                tileIndex = this.readFromOAM(0xFE02 + oamIndex) | 0b0000_0001;
-            }
-        } else {
-            // 8x8 tile indexing
-            spriteHeight = 8;
-            if (py >= objY + spriteHeight) {
-                return 'no-pixel-data';
-            }
-
-            tileIndex = this.readFromOAM(0xFE02 + oamIndex);
-        }
-
-        if (limitObjectsPerScanline) {
-            // If this added an 11th sprite, early return color 0 since we'd draw too many sprites per scanline
-            this.oamIndicesPerScanline.add(oamIndex);
-            if (this.oamIndicesPerScanline.size > 10) {
-                return 'too-many-objects';
-            }
-        }
-
-        const attributes = this.readFromOAM(0xFE03 + oamIndex);
-        const palette = (attributes & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
-        const xFlip = (attributes & 0b0010_0000) > 0;
-        const yFlip = (attributes & 0b0100_0000) > 0;
-        const bit7 = (attributes & 0b1000_0000) > 0;
-
-        const rx = xFlip ? spriteWidth - px - objX : px - objX;
-        const ry = yFlip ? spriteHeight - py - objY : py - objY;
-
-        const colorIndex = this.getTileData(tileIndex, rx, ry, 0);
-        return { colorIndex, palette, bit7 };
     }
 
     /**
