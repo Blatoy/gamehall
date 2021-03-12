@@ -261,18 +261,21 @@ export class GPU {
 
     draw(): void {
         // Background
-        let paletteIndex = this.getBackgroundData(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
-        let color = this.getPaletteColor(paletteIndex, Palette.Background);
+        const backgroundPaletteIndex = this.getBackgroundData(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
+        let color = this.getPaletteColor(backgroundPaletteIndex, Palette.Background);
 
         // Window
-        paletteIndex = this.getWindowData(this.scanX - this.memory.uint8Array[0xFF4B] - 7, this.scanY - this.memory.uint8Array[0xFF4A]);
-        if (paletteIndex >= 0) {
-            color = this.getPaletteColor(paletteIndex, Palette.Background);
+        const windowPaletteIndex = this.getWindowData(this.scanX - this.memory.uint8Array[0xFF4B] - 7, this.scanY - this.memory.uint8Array[0xFF4A]);
+        if (windowPaletteIndex >= 0) {
+            color = this.getPaletteColor(windowPaletteIndex, Palette.Background);
         }
+
+        const effectivePaletteIndex = windowPaletteIndex < 0 ? backgroundPaletteIndex : windowPaletteIndex;
 
         // Objects
         const objData = this.getObjectData(this.scanX, this.scanY);
-        if (objData.colorIndex !== 0) { // 0 is transparent for objects
+        // Bit7: BG and Window colors 1-3 render over OBJ
+        if (objData.colorIndex !== 0 && (!objData.bit7! || effectivePaletteIndex === 0)) { // 0 is transparent for objects
             color = this.getPaletteColor(objData.colorIndex, objData.palette!);
         }
 
@@ -438,7 +441,7 @@ export class GPU {
         }
     }
 
-    getObjectData(px: number, py: number): { colorIndex: number, palette?: Palette.Object0 | Palette.Object1 } {
+    getObjectData(px: number, py: number): { colorIndex: number, palette?: Palette.Object0 | Palette.Object1, bit7?: boolean } {
         // Early-return if object drawing is disabled
         if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0010) === 0) {
             return { colorIndex: 0 };
@@ -483,12 +486,15 @@ export class GPU {
             const palette = (this.readFromOAM(0xFE03 + i) & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
             const xFlip = (this.readFromOAM(0xFE03 + i) & 0b0010_0000) > 0;
             const yFlip = (this.readFromOAM(0xFE03 + i) & 0b0100_0000) > 0;
-            // TODO: Bit7   BG and Window over OBJ (0=No, 1=BG and Window colors 1-3 over the OBJ)
+            const bit7 = (this.readFromOAM(0xFE03 + i) & 0b1000_0000) > 0;
 
             const rx = xFlip ? spriteWidth - px - objX : px - objX;
             const ry = yFlip ? spriteHeight - py - objY : py - objY;
 
-            return { colorIndex: this.getTileData(tileIndex, rx, ry, 0), palette };
+            const colorIndex = this.getTileData(tileIndex, rx, ry, 0);
+            if (colorIndex !== 0) {
+                return { colorIndex, palette, bit7 };
+            }
         }
 
         return { colorIndex: 0 };
