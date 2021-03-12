@@ -316,26 +316,33 @@ export class GPU {
     }
 
     draw(): void {
+        let palette = Palette.Background;
+        let paletteIndex: number;
+
         // Background
         const backgroundPaletteIndex = this.getBackgroundData(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
-        let color = this.getPaletteColor(backgroundPaletteIndex, Palette.Background);
 
         // Window
         const windowPaletteIndex = this.getWindowData(this.scanX - this.memory.uint8Array[0xFF4B] + 7, this.scanY - this.memory.uint8Array[0xFF4A]);
         if (windowPaletteIndex >= 0) {
-            color = this.getPaletteColor(windowPaletteIndex, Palette.Background);
+            // Use window color
+            paletteIndex = windowPaletteIndex
+        } else {
+            // Use background color if not in window (special value -1 for transparent)
+            paletteIndex = backgroundPaletteIndex;
         }
-
-        const effectivePaletteIndex = windowPaletteIndex < 0 ? backgroundPaletteIndex : windowPaletteIndex;
 
         // Objects
         const objData = this.getObjectData(this.scanX, this.scanY);
         // Bit7: BG and Window colors 1-3 render over OBJ
-        if (objData.colorIndex !== 0 && (!objData.bit7! || effectivePaletteIndex === 0)) { // 0 is transparent for objects
-            color = this.getPaletteColor(objData.colorIndex, objData.palette!);
+        if (objData.colorIndex !== 0 && (!objData.bit7! || paletteIndex === 0)) { // 0 is transparent for objects
+            // Use sprite color
+            palette = objData.palette!;
+            paletteIndex = objData.colorIndex;
         }
 
         const position = (this.scanX + this.scanY * this.frameImageData.width) * 4;
+        const color = this.getPaletteColor(paletteIndex, palette);
         this.frameImageData.data[position] = color[0];
         this.frameImageData.data[position + 1] = color[1];
         this.frameImageData.data[position + 2] = color[2];
@@ -532,16 +539,25 @@ export class GPU {
     getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline?: false): Required<OAMInfo> | 'no-pixel-data';
     getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline?: true): Required<OAMInfo> | 'no-pixel-data' | 'too-many-objects';
     getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline = false): Required<OAMInfo> | 'no-pixel-data' | 'too-many-objects' {
+        const spriteWidth = 8;
         const objY = this.readFromOAM(0xFE00 + oamIndex) - 16;
+        if (py < objY) {
+            return 'no-pixel-data';
+        }
+
         const objX = this.readFromOAM(0xFE01 + oamIndex) - 8;
+        if (px < objX || px >= objX + spriteWidth) {
+            return 'no-pixel-data';
+        }
 
         let tileIndex: number;
-        let spriteWidth: number;
         let spriteHeight: number;
         if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0100) > 0) {
             // 8x16 tile indexing
-            spriteWidth = 8;
             spriteHeight = 16;
+            if (py >= objY + spriteHeight) {
+                return 'no-pixel-data';
+            }
 
             if (py < objY + spriteWidth) {
                 // Top tile
@@ -552,14 +568,12 @@ export class GPU {
             }
         } else {
             // 8x8 tile indexing
-            spriteWidth = 8;
             spriteHeight = 8;
-            tileIndex = this.readFromOAM(0xFE02 + oamIndex);
-        }
+            if (py >= objY + spriteHeight) {
+                return 'no-pixel-data';
+            }
 
-        // Skip if we aren't on the sprite
-        if (px < objX || px >= objX + spriteWidth || py < objY || py >= objY + spriteHeight) {
-            return 'no-pixel-data';
+            tileIndex = this.readFromOAM(0xFE02 + oamIndex);
         }
 
         if (limitObjectsPerScanline) {
@@ -570,10 +584,11 @@ export class GPU {
             }
         }
 
-        const palette = (this.readFromOAM(0xFE03 + oamIndex) & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
-        const xFlip = (this.readFromOAM(0xFE03 + oamIndex) & 0b0010_0000) > 0;
-        const yFlip = (this.readFromOAM(0xFE03 + oamIndex) & 0b0100_0000) > 0;
-        const bit7 = (this.readFromOAM(0xFE03 + oamIndex) & 0b1000_0000) > 0;
+        const attributes = this.readFromOAM(0xFE03 + oamIndex);
+        const palette = (attributes & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
+        const xFlip = (attributes & 0b0010_0000) > 0;
+        const yFlip = (attributes & 0b0100_0000) > 0;
+        const bit7 = (attributes & 0b1000_0000) > 0;
 
         const rx = xFlip ? spriteWidth - px - objX : px - objX;
         const ry = yFlip ? spriteHeight - py - objY : py - objY;
