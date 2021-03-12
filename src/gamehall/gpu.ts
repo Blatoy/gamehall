@@ -26,7 +26,62 @@ enum GPUMode {
     Drawing
 }
 
+type Color = [number, number, number, number];
+
+function makeColors(...colors: Color[]): Uint8ClampedArray {
+    const length = colors.length * 4 /* rgba */;
+    const buffer = new ArrayBuffer(length);
+    const array = new Uint8ClampedArray(buffer);
+    for (let i = 0; i < length; i += 4) {
+        array.set(colors[i / 4], i);
+    }
+    return array;
+}
+
 export class GPU {
+    static colorPresets: { [name: string]: Uint8ClampedArray } = {
+        gb: makeColors(
+            [155, 188, 15, 255],
+            [139, 172, 15, 255],
+            [48, 98, 48, 255],
+            [15, 56, 15, 255],
+            // Clear color
+            [202, 220, 159, 255]
+        ),
+        gbContrast: makeColors(
+            [168, 204, 11, 255],
+            [120, 154, 0, 255],
+            [48, 98, 48, 255],
+            [15, 56, 15, 255],
+            // Clear color
+            [202, 220, 159, 255]
+        ),
+        greyscale: makeColors(
+            [255, 255, 255, 255],
+            [185, 185, 185, 255],
+            [85, 85, 85, 255],
+            [5, 5, 5, 255],
+            // Clear color
+            [128, 128, 128, 255]
+        ),
+        fire: makeColors(
+            [224, 140, 6, 255],
+            [208, 0, 0, 255],
+            [55, 6, 23, 255],
+            [3, 7, 30, 255],
+            // Clear color
+            [255, 192, 30, 255]
+        ),
+        pastel: makeColors(
+            [250, 249, 249, 255],
+            [190, 227, 219, 255],
+            [137, 176, 174, 255],
+            [85, 91, 110, 255],
+            // Clear color
+            [255, 214, 186, 255]
+        ),
+    };
+
     private availableTime = 0;
 
     private scanX = 0;
@@ -65,6 +120,7 @@ export class GPU {
         this.memory.uint8Array[LCD_STAT] = (value & 0b0000_0011) | (this.memory.uint8Array[LCD_STAT] & 0b1111_1100);
     }
 
+    colors: Uint8ClampedArray = GPU.colorPresets.gb;
     screenOff = false;
     oamDmaAddress: number | undefined = undefined;
     oamDmaProgress = 0;
@@ -121,7 +177,7 @@ export class GPU {
             if (!this.screenOff) {
                 // On -> Off: Clear backbuffer
                 for (let i = 0; i < this.frameImageData.data.length; i++) {
-                    this.frameImageData.data[i] = colors[16 + (i % 4)];
+                    this.frameImageData.data[i] = this.colors[16 + (i % 4)];
                 }
 
                 this.screenOff = true;
@@ -562,7 +618,7 @@ export class GPU {
                 throw new Error('Invalid color index specified.');
         }
 
-        return colors.slice(colorIndex * 4, colorIndex * 4 + 4);
+        return this.colors.slice(colorIndex * 4, colorIndex * 4 + 4);
     }
 
     readFromOAM(byteOffset: number): number {
@@ -578,28 +634,6 @@ export enum Palette {
     Background,
     Object0,
     Object1
-}
-
-type Color = [number, number, number, number];
-
-const colors = makeColors(
-    // Regular palette
-    [155, 188, 15, 255],
-    [139, 172, 15, 255],
-    [48, 98, 48, 255],
-    [15, 56, 15, 255],
-    // Clear color
-    [200, 200, 100, 255]
-);
-
-function makeColors(...colors: Color[]) {
-    const length = colors.length * 4 /* rgba */;
-    const buffer = new ArrayBuffer(length);
-    const array = new Uint8ClampedArray(buffer);
-    for (let i = 0; i < length; i += 4) {
-        array.set(colors[i / 4], i);
-    }
-    return array;
 }
 
 /**

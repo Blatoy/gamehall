@@ -10,7 +10,7 @@ import { updateMemoryViewCanvas } from "./memory-view.js";
 import { updateFlags, updateRegisters } from "./registers.js";
 import { Speed } from "./speed.js";
 import { updateStack } from "./stack.js";
-import { updateTileViewCanvas } from './tile-view.js';
+import { TileView } from './tile-view.js';
 import { JumpHistory } from './jump-history.js';
 import { APU } from '../apu.js';
 
@@ -25,6 +25,7 @@ export class Debug {
     lastInstructions: LastInstructions;
     jumpHistory: JumpHistory;
     speed: Speed;
+    tileView: TileView;
 
     private _activeDisplayType = DisplayType.Hex;
     get activeDisplayType(): DisplayType {
@@ -56,6 +57,7 @@ export class Debug {
         this.lastInstructions = new LastInstructions(this);
         this.jumpHistory = new JumpHistory(this);
         this.speed = new Speed(clock);
+        this.tileView = new TileView(gpu);
 
         cycleDisplayButton.addEventListener("click", () => {
             this.cycleDisplayType();
@@ -126,8 +128,8 @@ export class Debug {
         updateFlags(this.cpu);
         updateStack(this.cpu, this.activeDisplayType);
         updateMemoryViewCanvas(this.cpu);
-        updateTileViewCanvas(this.cpu, this.gpu);
 
+        this.tileView.updateTileViewCanvas();
         this.lastInstructions.updateDOMTable();
         this.jumpHistory.updateDOMTable();
         this.memoryEditor.updateMemoryTable();
