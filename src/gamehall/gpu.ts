@@ -575,8 +575,8 @@ export class GPU {
         const yFlip = (this.readFromOAM(0xFE03 + oamIndex) & 0b0100_0000) > 0;
         const bit7 = (this.readFromOAM(0xFE03 + oamIndex) & 0b1000_0000) > 0;
 
-        const rx = xFlip ? spriteWidth - px - objX : px - objX;
-        const ry = yFlip ? spriteHeight - py - objY : py - objY;
+        const rx = xFlip ? spriteWidth - (px - objX) - 1 : px - objX;
+        const ry = yFlip ? spriteHeight - (py - objY) - 1 : py - objY;
 
         const colorIndex = this.getTileData(tileIndex, rx, ry, 0);
         return { colorIndex, palette, bit7 };
