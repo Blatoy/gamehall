@@ -14,12 +14,7 @@ class ROMOnly implements Cartridge {
     }
 
     onMemoryWrite(byteOffset: number, length: number, value: number, littleEndian?: boolean): boolean {
-        if (byteOffset <= SWITCHABLE_BANK_END) {
-            return false;
-        }
-        else {
-            return true;
-        }
+        return byteOffset > SWITCHABLE_BANK_END;
     }
 }
 

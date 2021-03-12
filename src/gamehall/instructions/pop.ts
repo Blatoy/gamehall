@@ -34,6 +34,7 @@ const popCodes: Instruction[] = [
         name: 'POP af',
         execute: (cpu: CPU) => {
             const value = cpu.stackPop16();
+            // Ensure lower nibble of the F register is always zeroed out
             cpu.registers.af.setUint(value.getUint() & 0xFFF0);
             return { machineCycles: 3 };
         }

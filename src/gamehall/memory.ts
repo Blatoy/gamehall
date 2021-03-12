@@ -63,6 +63,7 @@ export class Memory {
         // TODO: Set this memory depending on GB flag
         // this.uint8Array[0xFF26] = 0xF1; // 0xF1 -GB, $F0-SGB ; NR52
         this.uint8Array[0xFF40] = 0x91; // LCDC
+        this.uint8Array[0xFF41] = 0x03; // STAT
         this.uint8Array[0xFF42] = 0x00; // SCY
         this.uint8Array[0xFF43] = 0x00; // SCX
         this.uint8Array[0xFF45] = 0x00; // LYC

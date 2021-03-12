@@ -84,14 +84,14 @@ export class MemoryEditor {
     initInputs(): void {
         gotoInput.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (ev.key === "Enter") {
-                followPC.checked = false;
-    
                 let targetAddress = getValueFromString(this.cpu, gotoInput.value);
                 if (ev.shiftKey) {
+                    followPC.checked = false;
                     this.cpu.jump(targetAddress);
                 } if(ev.ctrlKey) {
                     this.toggleBreakpointAt(targetAddress);
                 } else {
+                    followPC.checked = false;
                     this.selectedPosition = targetAddress;
                 }
             } 
