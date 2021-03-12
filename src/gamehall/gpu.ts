@@ -261,10 +261,14 @@ export class GPU {
 
     draw(): void {
         // Background
-        let paletteIndex = this.getBgMapData1(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
+        let paletteIndex = this.getBackgroundData(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
         let color = this.getPaletteColor(paletteIndex, Palette.Background);
 
-        // TODO Window
+        // Window
+        paletteIndex = this.getWindowData(this.scanX - this.memory.uint8Array[0xFF4B] - 7, this.scanY - this.memory.uint8Array[0xFF4A]);
+        if (paletteIndex >= 0) {
+            color = this.getPaletteColor(paletteIndex, Palette.Background);
+        }
 
         // Objects
         const objData = this.getObjectData(this.scanX, this.scanY);
@@ -412,14 +416,25 @@ export class GPU {
         return bitValue;
     }
 
-    getBgMapData1(px: number, py: number): number {
+    getBackgroundData(px: number, py: number): number {
         if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0001) > 0) {
             const bgMap = (this.memory.uint8Array[LCD_CONTROL] & 0b0000_1000) >> 3;
             const signedAddressing = (this.memory.uint8Array[LCD_CONTROL] & 0b0001_0000) === 0;
             return this.getTileData(this.getTileIndex(px, py, bgMap, signedAddressing), px, py, signedAddressing ? 2 : 0);
         } else {
-            // BG is disabled
+            // BG is disabled (render as white)
             return 0;
+        }
+    }
+
+    getWindowData(px: number, py: number): number {
+        if (px >= 0 && py >= 0 && px < 256 && py < 256 && (this.memory.uint8Array[LCD_CONTROL] & 0b0010_0000) > 0) {
+            const bgMap = (this.memory.uint8Array[LCD_CONTROL] & 0b0100_0000) >> 6;
+            const signedAddressing = (this.memory.uint8Array[LCD_CONTROL] & 0b0001_0000) === 0;
+            return this.getTileData(this.getTileIndex(px, py, bgMap, signedAddressing), px, py, signedAddressing ? 2 : 0);
+        } else {
+            // Window is disabled or off-screen (don't render)
+            return -1;
         }
     }
 
