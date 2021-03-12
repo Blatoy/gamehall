@@ -602,40 +602,13 @@ export class GPU {
 
     /**
      * Notice: for objects, color index 0 is always transparent instead of the color returned by this function.
+     * @param value Must be between 0 and 3 to produce valid results.
      */
     getPaletteColor(value: number, paletteData: Palette): Uint8ClampedArray {
-        let address: number;
-        switch (paletteData) {
-            case Palette.Background:
-                address = 0xFF47;
-                break;
-            case Palette.Object0:
-                address = 0xFF48;
-                break;
-            case Palette.Object1:
-                address = 0xFF49;
-                break;
-        }
+        const address = 0xFF47 + paletteData;
         const palette = this.memory.uint8Array[address];
-
-        let colorIndex: number;
-        switch (value) {
-            case 0:
-                colorIndex = palette & 0b0000_0011;
-                break;
-            case 1:
-                colorIndex = (palette & 0b0000_1100) >> 2;
-                break;
-            case 2:
-                colorIndex = (palette & 0b0011_0000) >> 4;
-                break;
-            case 3:
-                colorIndex = (palette & 0b1100_0000) >> 6;
-                break;
-            default:
-                throw new Error('Invalid color index specified.');
-        }
-
+        const dv = value * 2;
+        const colorIndex = ((0b0000_0011 << dv) & palette) >> dv;
         return this.colors[colorIndex];
     }
 
