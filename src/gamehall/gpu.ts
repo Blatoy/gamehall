@@ -16,6 +16,9 @@ const TILE_X_COUNT = 32;
 const TILE_WIDTH = 8;
 const TILE_HEIGHT = 8;
 
+const LCD_CONTROL = 0xFF40;
+const LCD_STAT = 0xFF41;
+
 enum GPUMode {
     HBlank,
     VBlank,
@@ -35,12 +38,32 @@ export class GPU {
 
     set memoryScanY(value: number) {
         this.memory.uint8Array[0xFF44] = value;
+
+        // LYC=LY bit
+        if (this.lycEqual) {
+            this.memory.uint8Array[LCD_STAT] &= 0b1111_1011;
+        } else {
+            this.memory.uint8Array[LCD_STAT] |= 0b0000_0100;
+        }
+    }
+
+    /**
+     * Returns true if LY=LYC.
+     */
+    get lycEqual(): boolean {
+        return this.memory.uint8Array[0xFF45] === this.memory.uint8Array[0xFF44];
     }
 
     frameImageData: ImageData;
     renderedFrameHooks: RenderedFrameHook[] = [];
     modeTime = SEARCHING_OAM_CYCLES * MACHINE_CYCLE_SPEED;
-    mode = GPUMode.SearchingOAM;
+
+    get mode(): GPUMode {
+        return this.memory.uint8Array[LCD_STAT] & 0b0000_0011;
+    }
+    set mode(value: GPUMode) {
+        this.memory.uint8Array[LCD_STAT] = (value & 0b0000_0011) | (this.memory.uint8Array[LCD_STAT] & 0b1111_1100);
+    }
 
     screenOff = false;
     oamDmaAddress: number | undefined = undefined;
@@ -52,8 +75,7 @@ export class GPU {
         this.memory.data.hooks.push((byteOffset, length, value) => {
             if (byteOffset === 0xFF46) {
                 // Start DMA transfer
-                console.log('start DMA transfer', toHex(value));
-                this.oamDmaAddress = (value % 0xE0) * 100;
+                this.oamDmaAddress = (value % 0xE0) * 0x100;
             }
 
             // TODO: During certain GPU modes, block writes to OAM (maybe console.warn them?)
@@ -93,7 +115,7 @@ export class GPU {
             }
         }
 
-        if ((this.memory.uint8Array[0xFF40] & 0b1000_0000) === 0) {
+        if ((this.memory.uint8Array[LCD_CONTROL] & 0b1000_0000) === 0) {
             // LCD off flag
             if (!this.screenOff) {
                 // On -> Off: Clear backbuffer
@@ -104,6 +126,7 @@ export class GPU {
                 this.screenOff = true;
                 this.finishedFrame(false);
             }
+            // TODO: LCD off might still need to trigger interrupts, but ofc without drawing
             return;
         }
         this.screenOff = false;
@@ -123,17 +146,28 @@ export class GPU {
                         this.scanY++;
                         this.memoryScanY = this.scanY;
 
+                        let hadInterrupt = false;
+                        if (this.lycEqual && (this.memory.uint8Array[LCD_STAT] & 0b0100_0000) > 0) {
+                            // Request STAT (LYC=LY) interrupt
+                            this.memory.uint8Array[0xFF0F] |= 0b0000_0010;
+                            hadInterrupt = true;
+                        }
+
                         if (this.scanY >= 144) {
                             // this.debugInfo.push({ type: 'start vblank', time: this.debugFrameTime, cycles: this.debugFrameTime / MACHINE_CYCLE_SPEED });
                             this.mode = GPUMode.VBlank;
                             this.modeTime = V_BLANK_CYCLES * MACHINE_CYCLE_SPEED;
 
                             this.finishedFrame();
-                            break loop;
+                            hadInterrupt = true;
                         } else {
                             // this.debugInfo.push({ type: 'hblank is done', time: this.debugFrameTime, cycles: this.debugFrameTime / MACHINE_CYCLE_SPEED });
                             this.mode = GPUMode.SearchingOAM;
                             this.modeTime = SEARCHING_OAM_CYCLES * MACHINE_CYCLE_SPEED;
+                        }
+
+                        if (hadInterrupt) {
+                            break loop;
                         }
                     }
                     break;
@@ -143,9 +177,16 @@ export class GPU {
                         break loop;
                     }
 
+                    let hadInterrupt = false;
                     if (this.memoryScanY <= 153) {
                         // TODO: Check if this check is an issue
                         this.memoryScanY++;
+
+                        if (this.lycEqual && (this.memory.uint8Array[LCD_STAT] & 0b0100_0000) > 0) {
+                            // Request STAT (LYC=LY) interrupt
+                            this.memory.uint8Array[0xFF0F] |= 0b0000_0010;
+                            hadInterrupt = true;
+                        }
                     }
 
                     this.modeTime -= vblankStep;
@@ -156,6 +197,22 @@ export class GPU {
                         this.memoryScanY = 0;
                         this.mode = GPUMode.SearchingOAM;
                         this.modeTime = SEARCHING_OAM_CYCLES * MACHINE_CYCLE_SPEED;
+
+                        if (this.lycEqual && (this.memory.uint8Array[LCD_STAT] & 0b0100_0000) > 0) {
+                            // Request STAT (LYC=LY) interrupt
+                            this.memory.uint8Array[0xFF0F] |= 0b0000_0010;
+                            hadInterrupt = true;
+                        }
+
+                        if ((this.memory.uint8Array[LCD_STAT] & 0b0010_0000) > 0) {
+                            // Request STAT (oam) interrupt
+                            this.memory.uint8Array[0xFF0F] |= 0b0000_0010;
+                            hadInterrupt = true;
+                        }
+                    }
+
+                    if (hadInterrupt) {
+                        break loop;
                     }
                     break;
                 case GPUMode.SearchingOAM:
@@ -188,6 +245,12 @@ export class GPU {
                         // this.debugInfo.push({ type: 'scanX is 160', time: this.debugFrameTime, cycles: this.debugFrameTime / MACHINE_CYCLE_SPEED });
                         this.mode = GPUMode.HBlank;
                         this.modeTime = H_LINE_DRAWING_AND_BLANK_CYCLES * MACHINE_CYCLE_SPEED - this.modeTime;
+
+                        if ((this.memory.uint8Array[LCD_STAT] & 0b0000_1000) > 0) {
+                            // Request STAT (hblank) interrupt
+                            this.memory.uint8Array[0xFF0F] |= 0b0000_0010;
+                            break loop;
+                        }
                     }
                     break;
             }
@@ -195,10 +258,19 @@ export class GPU {
     }
 
     draw(): void {
-        const position = (this.scanX + this.scanY * this.frameImageData.width) * 4;
-        const paletteIndex = this.getBgMapData1(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
-        const color = this.getPaletteColor(paletteIndex, Palette.Background);
+        // Background
+        let paletteIndex = this.getBgMapData1(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
+        let color = this.getPaletteColor(paletteIndex, Palette.Background);
 
+        // TODO Window
+
+        // Objects
+        const objData = this.getObjectData(this.scanX, this.scanY);
+        if (objData !== undefined && objData.colorIndex !== 0) { // 0 is transparent for objects
+            color = this.getPaletteColor(objData.colorIndex, objData.palette);
+        }
+
+        const position = (this.scanX + this.scanY * this.frameImageData.width) * 4;
         this.frameImageData.data[position] = color[0];
         this.frameImageData.data[position + 1] = color[1];
         this.frameImageData.data[position + 2] = color[2];
@@ -212,8 +284,13 @@ export class GPU {
         }
 
         if (interrupt) {
-            // Request interrupt
+            // Request vblank interrupt
             this.memory.uint8Array[0xFF0F] |= 0b0000_0001;
+
+            if ((this.memory.uint8Array[LCD_STAT] & 0b0001_0000) > 0) {
+                // Request STAT (vblank) interrupt
+                this.memory.uint8Array[0xFF0F] |= 0b0000_0010;
+            }
         }
 
         // console.log('Frame time: ', this.debugFrameTime, 'info', JSON.parse(JSON.stringify(this.debugInfo)));
@@ -263,6 +340,7 @@ export class GPU {
      */
     getTileData(tileIndex: number, rx: number, ry: number, block: number): number {
         let blockAddress: number;
+        // TODO: This is the unsigned addressing mode - but we also have to implement signed addressing mode (for window/bg if LCDC bit 4 is set)
         switch (block) {
             case 0:
                 blockAddress = 0x8000;
@@ -308,11 +386,10 @@ export class GPU {
         const byteOffset = ry * 2;
 
         // 3: Retrieve bit pair at the correct index
-        // TODO: 3 different block indexing methods
-        const tileByteUpper = this.memory.uint8Array[blockAddress + tileIndex * 16 + byteOffset];
-        const tileByteLower = this.memory.uint8Array[blockAddress + tileIndex * 16 + byteOffset + 1];
-        const maskedByteUpper = (0b1000_0000 >> rx) & tileByteUpper;
+        const tileByteLower = this.memory.uint8Array[blockAddress + tileIndex * 16 + byteOffset];
+        const tileByteUpper = this.memory.uint8Array[blockAddress + tileIndex * 16 + byteOffset + 1];
         const maskedByteLower = (0b1000_0000 >> rx) & tileByteLower;
+        const maskedByteUpper = (0b1000_0000 >> rx) & tileByteUpper;
 
         // Right-shift by -1 does not work, do a left-shift instead
         let bitValue: number;
@@ -326,7 +403,54 @@ export class GPU {
     }
 
     getBgMapData1(px: number, py: number): number {
-        return this.getTileData(this.getTileIndex(px, py, 0), px, py, 0);
+        if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0001) > 0) {
+            return this.getTileData(this.getTileIndex(px, py, 0), px, py, 0);
+        } else {
+            // BG is disabled
+            return 0;
+        }
+    }
+
+    getObjectData(px: number, py: number): { colorIndex: number, palette: Palette.Object0 | Palette.Object1 } | undefined {
+        // TODO: Allow max 10 objects per scanline (afterwards just early-return 0 here)
+
+        // Go through list of objects (4 bytes each) in OAM
+        for (let i = 0; i < 160; i += 4) {
+            const objY = this.memory.uint8Array[0xFE00 + i] - 16;
+            const objX = this.memory.uint8Array[0xFE01 + i] - 8;
+
+            let tileIndex: number;
+            let spriteWidth: number;
+            let spriteHeight: number;
+            if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0100) > 0) {
+                // TODO: 8x16 tile indexing
+                tileIndex = -1;
+                spriteWidth = 8;
+                spriteHeight = 16;
+            } else {
+                // 8x8 tile indexing
+                tileIndex = this.memory.uint8Array[0xFE02 + i];
+                spriteWidth = 8;
+                spriteHeight = 8;
+            }
+
+            // Skip if we aren't on the sprite
+            if (px < objX || px >= objX + spriteWidth || py < objY || py >= objY + spriteHeight) {
+                continue;
+            }
+
+            const palette = (this.memory.uint8Array[0xFE03 + i] & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
+            const xFlip = (this.memory.uint8Array[0xFE03 + i] & 0b0010_0000) > 0;
+            const yFlip = (this.memory.uint8Array[0xFE03 + i] & 0b0100_0000) > 0;
+            // TODO: Bit7   BG and Window over OBJ (0=No, 1=BG and Window colors 1-3 over the OBJ)
+
+            const rx = xFlip ? spriteWidth - px - objX : px - objX;
+            const ry = yFlip ? spriteHeight - py - objY : py - objY;
+
+            return { colorIndex: this.getTileData(tileIndex, rx, ry, 0), palette };
+        }
+
+        return undefined;
     }
 
     getPaletteColor(value: number, paletteData: Palette): Uint8ClampedArray {
