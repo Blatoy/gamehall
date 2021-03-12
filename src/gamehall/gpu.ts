@@ -265,7 +265,7 @@ export class GPU {
         let color = this.getPaletteColor(backgroundPaletteIndex, Palette.Background);
 
         // Window
-        const windowPaletteIndex = this.getWindowData(this.scanX - this.memory.uint8Array[0xFF4B] - 7, this.scanY - this.memory.uint8Array[0xFF4A]);
+        const windowPaletteIndex = this.getWindowData(this.scanX - this.memory.uint8Array[0xFF4B] + 7, this.scanY - this.memory.uint8Array[0xFF4A]);
         if (windowPaletteIndex >= 0) {
             color = this.getPaletteColor(windowPaletteIndex, Palette.Background);
         }
