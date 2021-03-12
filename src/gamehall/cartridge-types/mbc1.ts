@@ -1,5 +1,5 @@
 import { CartridgeController } from '../cartridge-controller.js';
-import { RAM_END, RAM_SIZE, RAM_START, SWITCHABLE_BANK_END, Cartridge, CartridgeType, SWITCHABLE_BANK_SIZE, SWITCHABLE_BANK_START } from '../cartridge.js';
+import { RAM_END, RAM_SIZE, RAM_START, SWITCHABLE_BANK_END, Cartridge, CartridgeType, SWITCHABLE_BANK_SIZE, SWITCHABLE_BANK_START, ROM_START } from '../cartridge.js';
 
 const RAM_BANK_COUNT = 3;
 
@@ -9,129 +9,194 @@ enum BankingMode {
 }
 
 class MBC1 implements Cartridge {
-    bankingMode = BankingMode.Simple;
-    ramEnabled = false;
-    selectedRamBank = 0;
-    ramBuffer = new ArrayBuffer(RAM_BANK_COUNT * RAM_SIZE);
-    ram = new Uint8Array(this.ramBuffer);
-    cartridgeBankCount = 0;
-
-    constructor(private controller: CartridgeController) {
-        this.cartridgeBankCount = controller.gameROM!.uint8Array.byteLength / SWITCHABLE_BANK_SIZE;
-    }
-
     static get code(): number {
         return 0x01;
     }
 
-    // TODO: Have this shared to save on memory?
-    private disabledRam = new Uint8Array(new Array(RAM_SIZE).fill(0xFF));
+    bankingMode = BankingMode.Simple;
+
+    ramBanks: Array<Uint8Array> = [];
+    ramEnabled = false;
+
+    ramSize = -1;
+    romSize = -1;
+    romBankCount = -1;
+    ramBankCount = -1;
+
+    currentLowBankValue = 0x01;
+    currentHighBankValue = 0x00;
+
+    constructor(private controller: CartridgeController) { }
+
+    isLargeROM(): boolean {
+        return this.romSize >= 1024 * 1024;
+    }
+
+    isLargeRAM(): boolean {
+        return this.ramSize >= 8 * 1024;
+    }
+
+    disableRam() {
+        for (let i = 0; i < RAM_SIZE; i++) {
+            this.controller.cpu.memory.uint8Array[RAM_START + i] = 0xFF;
+        }
+    }
 
     load(): void {
         // Load banks 0 and 1
         this.controller.loadIntoMemory(0, 0, SWITCHABLE_BANK_END, "game");
         // Load FF into RAM as it is disabled by default
-        this.controller.cpu.memory.writeUint8Array(this.disabledRam, RAM_START);
-    }
+        this.disableRam();
 
-    private handleRAMBankSwap() {
-        if (this.ramEnabled) {
-            // Replace FF by what is in ram
-            this.controller.cpu.memory.writeUint8Array(this.ram.slice(RAM_SIZE * this.selectedRamBank, RAM_SIZE * (1 + this.selectedRamBank)), RAM_START);
-        } else {
-            // Save selected RAM
-            this.ram.set(this.controller.cpu.memory.uint8Array.slice(RAM_START, RAM_END + 1), RAM_SIZE * this.selectedRamBank);
-            // Replace RAM with FF
-            this.controller.cpu.memory.writeUint8Array(this.disabledRam, RAM_START);
+        this.romBankCount = this.controller.gameROM!.uint8Array.byteLength / SWITCHABLE_BANK_SIZE;
+        this.romSize = 32 * 1024 << this.controller.gameROM!.uint8Array[0x148];
+
+        switch (this.controller.gameROM!.uint8Array[0x149]) {
+            case 0:
+            case 1:
+                this.ramSize = 0; // no ram or unused
+                this.ramBankCount = 0;
+                break;
+            case 2:
+                this.ramSize = 8 * 1024;
+                this.ramBankCount = 1;
+                break;
+            case 3:
+                this.ramSize = 32 * 1024;
+                this.ramBankCount = 4;
+                break;
+            case 4:
+                this.ramSize = 128 * 1024;
+                this.ramBankCount = 16;
+                break;
+            case 5:
+                this.ramSize = 64 * 1024;
+                this.ramBankCount = 8;
+                break;
+        }
+
+        for (let i = 0; i < this.ramBankCount; i++) {
+            let ramBuffer = new ArrayBuffer(RAM_SIZE);
+            this.ramBanks.push(new Uint8Array(ramBuffer));
         }
     }
 
+    getSelectedRamBank(): Uint8Array | undefined{
+        if (this.ramBankCount === 0) {
+            return undefined;
+        }
+
+        if (this.bankingMode === BankingMode.Simple || !this.isLargeRAM()) {
+            return this.ramBanks[0];
+        } else {
+            // TODO: % this number if required?
+            return this.ramBanks[this.currentHighBankValue >> 5];
+        }
+    }
+
+    copySelectedRamBankToMemory() {
+        if (this.ramEnabled) {
+            let selectedRamBank = this.getSelectedRamBank();
+            if (selectedRamBank) {
+                this.controller.cpu.memory.writeUint8Array(selectedRamBank, RAM_START);
+            }
+        } else {
+            this.disableRam();
+        }
+    }
+
+    copySelectedRomBankToMemory() {
+        let selectedRomBank = this.currentLowBankValue;
+
+        if (this.isLargeROM()) {
+            // Large ROM also use high bit values
+            selectedRomBank += this.currentHighBankValue;
+        }
+
+        // Swap ROM bank at 0x4000
+        let memoryBank = this.controller.gameROM!.uint8Array.slice(SWITCHABLE_BANK_SIZE * selectedRomBank, SWITCHABLE_BANK_SIZE * (selectedRomBank + 1) - 1);
+        this.controller.cpu.memory.write(SWITCHABLE_BANK_START, memoryBank);
+
+        if (this.bankingMode === BankingMode.Advanced && this.isLargeROM()) {
+            let selectedRomBank = this.currentHighBankValue;
+            let memoryBank = this.controller.gameROM!.uint8Array.slice(SWITCHABLE_BANK_SIZE * selectedRomBank, SWITCHABLE_BANK_SIZE * (selectedRomBank + 1) - 1);
+            this.controller.cpu.memory.write(ROM_START, memoryBank);
+        } else if(this.isLargeROM()) {
+            // Swap back in ROM 0
+            // TODO: If this is slow add a check to not do it if it's already in place
+            let memoryBank = this.controller.gameROM!.uint8Array.slice(0, SWITCHABLE_BANK_SIZE - 1);
+            this.controller.cpu.memory.write(ROM_START, memoryBank);
+        }
+    }
+
+
     onMemoryWrite(byteOffset: number, length: number, value: number, littleEndian?: boolean): boolean {
+
         // Enable or disable external RAM access
         if (byteOffset <= 0x1FFF) {
-            
             this.ramEnabled = (0x0A & value) === 0x0A;
-            // Note: debugging logs are kept until advanced mode is implemented
-            // console.log("changing ram status to", this.ramEnabled);
-            this.handleRAMBankSwap();
+            this.copySelectedRamBankToMemory();
             return false;
         }
 
-        // Set the low bank value (which is bank number in normal mode)
+        // Set the low bank value (which is always bank number)
         if (byteOffset >= 0x2000 && byteOffset <= 0x3FFF) {
-            let mask = Math.min(0b0001_1111,  Math.pow(2, (Math.floor(Math.log2(value)) + 1)) - 1); // This could be cached
+            // Create a mask to ignore all bits above the max possible bank count of the cartridge
+            let mask = Math.pow(2, (Math.floor(Math.log2(this.romBankCount) + 1))) - 1; // This could be cached
+            value &= mask & 0b0001_1111;
 
-            // console.log("Trying to switch to bank", toHex(value), "fixed bank number =", toHex(value & mask), "PC: ", this.controller.cpu.registers.pc.getUint());
-            value = mask & value;
-
+            // Cannot have these values in low bank value, it always pick +1 if any of these is picked
             if (value === 0x00 || value === 0x20 || value === 0x40 || value === 0x60) {
-                value += 1;
+                value++;
             }
 
-            if (this.bankingMode === BankingMode.Advanced) {    
-                throw new Error("MBC1: advanced banking mode not supported yet");
-            }
-            else {
-                // console.log("Switching to bank", value, "/", this.cartridgeBankCount, "starting at", toHex(SWITCHABLE_BANK_SIZE * value), "ending at", toHex(SWITCHABLE_BANK_SIZE * (value + 1) - 1), "writing it at", toHex(SWITCHABLE_BANK_START));
-                
-                let memoryBank = this.controller.gameROM!.uint8Array.slice(SWITCHABLE_BANK_SIZE * value, SWITCHABLE_BANK_SIZE * (value + 1) - 1);
-                this.controller.cpu.memory.write(SWITCHABLE_BANK_START, memoryBank);
-            }
+            this.currentLowBankValue = value;
 
+            this.copySelectedRomBankToMemory();
             return false;
         }
 
         // Set RAM bank number OR upper rom bank bits
         if (byteOffset >= 0x4000 && byteOffset <= 0x5FFF) {
-            if (this.bankingMode === BankingMode.Advanced) {
-                // TODO: To implement advanced mode store rom bank number and adjust its higher bit
-                throw new Error("MBC1: advanced banking mode not supported yet");
-            }
-            else {
-                console.log("setting ram bank number to", value);
-                
-                // TODO: This should check that value is not higher than what's available!
-                this.selectedRamBank = value;
-                this.handleRAMBankSwap();
-            }
+            this.currentHighBankValue = value << 5;
 
+            this.copySelectedRomBankToMemory();
+            this.copySelectedRamBankToMemory();
             return false;
         }
 
         // Change banking mode
         if (byteOffset >= 0x6000 && byteOffset <= 0x7FFF) {
-            if (value === 0x00) {
-                // console.log("change banking mode");
-                
+            if ((value & 0x01) === 0x00) {
                 this.bankingMode = BankingMode.Simple;
-            }
-            else {
-                // TODO: Support advanced banking mode
-                throw new Error("MBC1: advanced banking mode not supported yet");
+                
+            } else if ((value & 0x01) === 0x01) {
+                this.bankingMode = BankingMode.Advanced;
             }
 
+            this.copySelectedRomBankToMemory();
+            this.copySelectedRamBankToMemory();
             return false;
         }
 
-        // Can only write to RAM if it's enabled
+        // Can only write to RAM if it is enabled
         if (byteOffset >= RAM_START && byteOffset <= RAM_END) {
-            
-            return this.ramEnabled;
+            if (this.ramEnabled) {
+                // Update local copy of RAM
+                let selectedRamBank = this.getSelectedRamBank();
+                if (selectedRamBank) {
+                    selectedRamBank[byteOffset - RAM_START] = value;
+                }
+                return true;
+            }
+
+            return false;
         }
 
         return true;
     }
 }
 
-class MBC1_RAM_BATTERY extends MBC1 {
-    static get code(): number {
-        return 0x13;
-    }
-
-    // TODO: Ram persistence using local storage?
-}
-
 export default [
-    MBC1,
-    MBC1_RAM_BATTERY
+    MBC1
 ] as CartridgeType[];
