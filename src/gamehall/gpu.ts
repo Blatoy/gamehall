@@ -1,6 +1,5 @@
 import { Memory } from "./memory.js";
 import { MACHINE_CYCLE_SPEED } from './cpu.js';
-import { toHex } from "./utils.js";
 
 const OAM_DMA_CYCLES = 160;
 const SEARCHING_OAM_CYCLES = 20;
@@ -26,20 +25,24 @@ enum GPUMode {
     Drawing
 }
 
-type Color = [number, number, number, number];
+type ColorDefinition = [number, number, number, number];
 
-function makeColors(...colors: Color[]): Uint8ClampedArray {
-    const length = colors.length * 4 /* rgba */;
-    const buffer = new ArrayBuffer(length);
-    const array = new Uint8ClampedArray(buffer);
-    for (let i = 0; i < length; i += 4) {
-        array.set(colors[i / 4], i);
+function makeColors(...colors: ColorDefinition[]): Uint8ClampedArray[] {
+    const results: Uint8ClampedArray[] = [];
+    for (let i = 0; i < colors.length; i++) {
+        const buffer = new ArrayBuffer(4);
+        const array = new Uint8ClampedArray(buffer);
+        array[0] = colors[i][0];
+        array[1] = colors[i][1];
+        array[2] = colors[i][2];
+        array[3] = colors[i][3];
+        results.push(array);
     }
-    return array;
+    return results;
 }
 
 export class GPU {
-    static colorPresets: { [name: string]: Uint8ClampedArray } = {
+    static colorPresets: { [name: string]: Uint8ClampedArray[] } = {
         gb: makeColors(
             [155, 188, 15, 255],
             [139, 172, 15, 255],
@@ -120,7 +123,7 @@ export class GPU {
         this.memory.uint8Array[LCD_STAT] = (value & 0b0000_0011) | (this.memory.uint8Array[LCD_STAT] & 0b1111_1100);
     }
 
-    colors: Uint8ClampedArray = GPU.colorPresets.gb;
+    colors: Uint8ClampedArray[] = GPU.colorPresets.gb;
     screenOff = false;
     oamDmaAddress: number | undefined = undefined;
     oamDmaProgress = 0;
@@ -177,7 +180,7 @@ export class GPU {
             if (!this.screenOff) {
                 // On -> Off: Clear backbuffer
                 for (let i = 0; i < this.frameImageData.data.length; i++) {
-                    this.frameImageData.data[i] = this.colors[16 + (i % 4)];
+                    this.frameImageData.data[i] = this.colors[4][i % 4];
                 }
 
                 this.screenOff = true;
@@ -316,26 +319,33 @@ export class GPU {
     }
 
     draw(): void {
+        let palette = Palette.Background;
+        let paletteIndex: number;
+
         // Background
         const backgroundPaletteIndex = this.getBackgroundData(this.scanX + this.memory.uint8Array[0xFF43], this.scanY + this.memory.uint8Array[0xFF42]);
-        let color = this.getPaletteColor(backgroundPaletteIndex, Palette.Background);
 
         // Window
         const windowPaletteIndex = this.getWindowData(this.scanX - this.memory.uint8Array[0xFF4B] + 7, this.scanY - this.memory.uint8Array[0xFF4A]);
         if (windowPaletteIndex >= 0) {
-            color = this.getPaletteColor(windowPaletteIndex, Palette.Background);
+            // Use window color
+            paletteIndex = windowPaletteIndex
+        } else {
+            // Use background color if not in window (special value -1 for transparent)
+            paletteIndex = backgroundPaletteIndex;
         }
-
-        const effectivePaletteIndex = windowPaletteIndex < 0 ? backgroundPaletteIndex : windowPaletteIndex;
 
         // Objects
         const objData = this.getObjectData(this.scanX, this.scanY);
         // Bit7: BG and Window colors 1-3 render over OBJ
-        if (objData.colorIndex !== 0 && (!objData.bit7! || effectivePaletteIndex === 0)) { // 0 is transparent for objects
-            color = this.getPaletteColor(objData.colorIndex, objData.palette!);
+        if (objData.colorIndex !== 0 && (!objData.bit7! || paletteIndex === 0)) { // 0 is transparent for objects
+            // Use sprite color
+            palette = objData.palette!;
+            paletteIndex = objData.colorIndex;
         }
 
         const position = (this.scanX + this.scanY * this.frameImageData.width) * 4;
+        const color = this.getPaletteColor(paletteIndex, palette);
         this.frameImageData.data[position] = color[0];
         this.frameImageData.data[position + 1] = color[1];
         this.frameImageData.data[position + 2] = color[2];
@@ -508,18 +518,66 @@ export class GPU {
             return { colorIndex: 0 };
         }
 
+        // Cached values that should not change during drawing
+        const tallSprites = (this.memory.uint8Array[LCD_CONTROL] & 0b0000_0100) > 0;
+
         // Go through list of objects (4 bytes each) in OAM
         for (let i = 0; i < 160; i += 4) {
-            const objectData = this.getSpecificObjectData(px, py, i, true);
-            if (objectData === 'no-pixel-data') {
-                // This oam entry does not have pixel data here
+            const spriteWidth = 8;
+            const objY = this.readFromOAM(0xFE00 + i) - 16;
+            if (py < objY) {
                 continue;
-            } else if (objectData === 'too-many-objects') {
-                // Early-return if we already drew more than 10 sprites in this scanline
+            }
+    
+            const objX = this.readFromOAM(0xFE01 + i) - 8;
+            if (px < objX || px >= objX + spriteWidth) {
+                continue;
+            }
+    
+            let tileIndex: number;
+            let spriteHeight: number;
+            if (tallSprites) {
+                // 8x16 tile indexing
+                spriteHeight = 16;
+                if (py >= objY + spriteHeight) {
+                    continue;
+                }
+    
+                if (py < objY + spriteWidth) {
+                    // Top tile
+                    tileIndex = this.readFromOAM(0xFE02 + i) & 0b1111_1110;
+                } else {
+                    // Bottom tile
+                    tileIndex = this.readFromOAM(0xFE02 + i) | 0b0000_0001;
+                }
+            } else {
+                // 8x8 tile indexing
+                spriteHeight = 8;
+                if (py >= objY + spriteHeight) {
+                    continue;
+                }
+    
+                tileIndex = this.readFromOAM(0xFE02 + i);
+            }
+    
+            // If this added an 11th sprite, early return color 0 since we'd draw too many sprites per scanline
+            this.oamIndicesPerScanline.add(i);
+            if (this.oamIndicesPerScanline.size > 10) {
                 return { colorIndex: 0 };
-            } else if (objectData.colorIndex !== 0) {
-                // We found a non-transparent pixel
-                return objectData;
+            }
+    
+            const attributes = this.readFromOAM(0xFE03 + i);
+            const xFlip = (attributes & 0b0010_0000) > 0;
+            const yFlip = (attributes & 0b0100_0000) > 0;
+    
+            const rx = xFlip ? spriteWidth - (px - objX) - 1 : px - objX;
+            const ry = yFlip ? spriteHeight - (py - objY) - 1 : py - objY;
+    
+            const colorIndex = this.getTileData(tileIndex, rx, ry, 0);
+            if (colorIndex !== 0) {
+                const palette = (attributes & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
+                const bit7 = (attributes & 0b1000_0000) > 0;
+                return { colorIndex, palette, bit7 };
             }
         }
 
@@ -527,98 +585,15 @@ export class GPU {
     }
 
     /**
-     * @param limitObjectsPerScanline If set to true, add object towards per-scanline limit and may return 'too-many-objects'.
-     */
-    getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline?: false): Required<OAMInfo> | 'no-pixel-data';
-    getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline?: true): Required<OAMInfo> | 'no-pixel-data' | 'too-many-objects';
-    getSpecificObjectData(px: number, py: number, oamIndex: number, limitObjectsPerScanline = false): Required<OAMInfo> | 'no-pixel-data' | 'too-many-objects' {
-        const objY = this.readFromOAM(0xFE00 + oamIndex) - 16;
-        const objX = this.readFromOAM(0xFE01 + oamIndex) - 8;
-
-        let tileIndex: number;
-        let spriteWidth: number;
-        let spriteHeight: number;
-        if ((this.memory.uint8Array[LCD_CONTROL] & 0b0000_0100) > 0) {
-            // 8x16 tile indexing
-            spriteWidth = 8;
-            spriteHeight = 16;
-
-            if (py < objY + spriteWidth) {
-                // Top tile
-                tileIndex = this.readFromOAM(0xFE02 + oamIndex) & 0b1111_1110;
-            } else {
-                // Bottom tile
-                tileIndex = this.readFromOAM(0xFE02 + oamIndex) | 0b0000_0001;
-            }
-        } else {
-            // 8x8 tile indexing
-            spriteWidth = 8;
-            spriteHeight = 8;
-            tileIndex = this.readFromOAM(0xFE02 + oamIndex);
-        }
-
-        // Skip if we aren't on the sprite
-        if (px < objX || px >= objX + spriteWidth || py < objY || py >= objY + spriteHeight) {
-            return 'no-pixel-data';
-        }
-
-        if (limitObjectsPerScanline) {
-            // If this added an 11th sprite, early return color 0 since we'd draw too many sprites per scanline
-            this.oamIndicesPerScanline.add(oamIndex);
-            if (this.oamIndicesPerScanline.size > 10) {
-                return 'too-many-objects';
-            }
-        }
-
-        const palette = (this.readFromOAM(0xFE03 + oamIndex) & 0b0001_0000) > 0 ? Palette.Object1 : Palette.Object0;
-        const xFlip = (this.readFromOAM(0xFE03 + oamIndex) & 0b0010_0000) > 0;
-        const yFlip = (this.readFromOAM(0xFE03 + oamIndex) & 0b0100_0000) > 0;
-        const bit7 = (this.readFromOAM(0xFE03 + oamIndex) & 0b1000_0000) > 0;
-
-        const rx = xFlip ? spriteWidth - (px - objX) - 1 : px - objX;
-        const ry = yFlip ? spriteHeight - (py - objY) - 1 : py - objY;
-
-        const colorIndex = this.getTileData(tileIndex, rx, ry, 0);
-        return { colorIndex, palette, bit7 };
-    }
-
-    /**
      * Notice: for objects, color index 0 is always transparent instead of the color returned by this function.
+     * @param value Must be between 0 and 3 to produce valid results.
      */
     getPaletteColor(value: number, paletteData: Palette): Uint8ClampedArray {
-        let address: number;
-        switch (paletteData) {
-            case Palette.Background:
-                address = 0xFF47;
-                break;
-            case Palette.Object0:
-                address = 0xFF48;
-                break;
-            case Palette.Object1:
-                address = 0xFF49;
-                break;
-        }
+        const address = 0xFF47 + paletteData;
         const palette = this.memory.uint8Array[address];
-
-        let colorIndex: number;
-        switch (value) {
-            case 0:
-                colorIndex = palette & 0b0000_0011;
-                break;
-            case 1:
-                colorIndex = (palette & 0b0000_1100) >> 2;
-                break;
-            case 2:
-                colorIndex = (palette & 0b0011_0000) >> 4;
-                break;
-            case 3:
-                colorIndex = (palette & 0b1100_0000) >> 6;
-                break;
-            default:
-                throw new Error('Invalid color index specified.');
-        }
-
-        return this.colors.slice(colorIndex * 4, colorIndex * 4 + 4);
+        const dv = value * 2;
+        const colorIndex = ((0b0000_0011 << dv) & palette) >> dv;
+        return this.colors[colorIndex];
     }
 
     readFromOAM(byteOffset: number): number {
