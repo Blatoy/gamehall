@@ -1,6 +1,5 @@
 import { Memory } from "./memory.js";
 import { MACHINE_CYCLE_SPEED } from './cpu.js';
-import { toHex } from "./utils.js";
 
 const OAM_DMA_CYCLES = 160;
 const SEARCHING_OAM_CYCLES = 20;
@@ -26,20 +25,24 @@ enum GPUMode {
     Drawing
 }
 
-type Color = [number, number, number, number];
+type ColorDefinition = [number, number, number, number];
 
-function makeColors(...colors: Color[]): Uint8ClampedArray {
-    const length = colors.length * 4 /* rgba */;
-    const buffer = new ArrayBuffer(length);
-    const array = new Uint8ClampedArray(buffer);
-    for (let i = 0; i < length; i += 4) {
-        array.set(colors[i / 4], i);
+function makeColors(...colors: ColorDefinition[]): Uint8ClampedArray[] {
+    const results: Uint8ClampedArray[] = [];
+    for (let i = 0; i < colors.length; i++) {
+        const buffer = new ArrayBuffer(4);
+        const array = new Uint8ClampedArray(buffer);
+        array[0] = colors[i][0];
+        array[1] = colors[i][1];
+        array[2] = colors[i][2];
+        array[3] = colors[i][3];
+        results.push(array);
     }
-    return array;
+    return results;
 }
 
 export class GPU {
-    static colorPresets: { [name: string]: Uint8ClampedArray } = {
+    static colorPresets: { [name: string]: Uint8ClampedArray[] } = {
         gb: makeColors(
             [155, 188, 15, 255],
             [139, 172, 15, 255],
@@ -120,7 +123,7 @@ export class GPU {
         this.memory.uint8Array[LCD_STAT] = (value & 0b0000_0011) | (this.memory.uint8Array[LCD_STAT] & 0b1111_1100);
     }
 
-    colors: Uint8ClampedArray = GPU.colorPresets.gb;
+    colors: Uint8ClampedArray[] = GPU.colorPresets.gb;
     screenOff = false;
     oamDmaAddress: number | undefined = undefined;
     oamDmaProgress = 0;
@@ -177,7 +180,7 @@ export class GPU {
             if (!this.screenOff) {
                 // On -> Off: Clear backbuffer
                 for (let i = 0; i < this.frameImageData.data.length; i++) {
-                    this.frameImageData.data[i] = this.colors[16 + (i % 4)];
+                    this.frameImageData.data[i] = this.colors[4][i % 4];
                 }
 
                 this.screenOff = true;
@@ -633,7 +636,7 @@ export class GPU {
                 throw new Error('Invalid color index specified.');
         }
 
-        return this.colors.slice(colorIndex * 4, colorIndex * 4 + 4);
+        return this.colors[colorIndex];
     }
 
     readFromOAM(byteOffset: number): number {
